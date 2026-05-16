@@ -2,18 +2,18 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, ImagePlus, ChevronDown } from 'lucide-react'
+import { X, ChevronDown } from 'lucide-react'
 import { useAppStore } from '@/stores/app-store'
 
 const COMMUNITIES = [
-  { name: 'r/QuantumDev', color: '#7C4DFF' },
-  { name: 'r/NeuralArt', color: '#00E5FF' },
-  { name: 'r/CyberPunk', color: '#FF4DA6' },
-  { name: 'r/AIFuture', color: '#00FFB2' },
-  { name: 'r/MetaVerse', color: '#7C4DFF' },
-  { name: 'r/HoloTech', color: '#00E5FF' },
-  { name: 'r/SpaceTech', color: '#FF4DA6' },
-  { name: 'r/CryptoNexus', color: '#00FFB2' },
+  { name: 'r/qdev', color: '#C7FF3F' },
+  { name: 'r/ml', color: '#C7FF3F' },
+  { name: 'r/cyber', color: '#C7FF3F' },
+  { name: 'r/aifuture', color: '#C7FF3F' },
+  { name: 'r/metaverse', color: '#C7FF3F' },
+  { name: 'r/holo', color: '#C7FF3F' },
+  { name: 'r/spacetech', color: '#C7FF3F' },
+  { name: 'r/crypto', color: '#C7FF3F' },
 ]
 
 export function CreatePostModal() {
@@ -25,16 +25,15 @@ export function CreatePostModal() {
 
   const handleClose = () => {
     setCreatePostOpen(false)
-    // Reset form
     setTimeout(() => {
       setSelectedCommunity('')
       setTitle('')
       setContent('')
+      setIsCommunityOpen(false)
     }, 200)
   }
 
   const handlePost = () => {
-    // Post creation logic placeholder
     handleClose()
   }
 
@@ -49,66 +48,95 @@ export function CreatePostModal() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-50"
+            style={{ background: 'rgba(0,0,0,0.6)' }}
             onClick={handleClose}
           />
 
           {/* Modal */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
           >
             <div
-              className="glass-strong rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto pointer-events-auto"
+              className="w-full max-w-lg max-h-[85vh] overflow-y-auto pointer-events-auto rounded-lg"
+              style={{
+                background: '#151515',
+                border: '1px solid rgba(255,255,255,0.06)',
+              }}
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="flex items-center justify-between p-5 pb-4 border-b border-white/5">
-                <h2 className="text-xl font-bold gradient-text">Create a Thread</h2>
-                <motion.button
+              <div
+                className="flex items-center justify-between px-5 h-12 flex-shrink-0"
+                style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+              >
+                <h2
+                  className="font-display font-semibold text-sm"
+                  style={{ color: '#F5F5F5' }}
+                >
+                  New thread
+                </h2>
+                <button
                   onClick={handleClose}
-                  className="w-8 h-8 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/10 text-[#94A3B8] hover:text-white transition-colors cursor-pointer"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
+                  className="flex items-center justify-center w-7 h-7 rounded cursor-pointer transition-colors duration-150"
+                  style={{ color: '#555555' }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.color = '#888888'
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.color = '#555555'
+                  }}
                   aria-label="Close"
                 >
                   <X size={16} />
-                </motion.button>
+                </button>
               </div>
 
               {/* Body */}
               <div className="p-5 space-y-4">
                 {/* Community selector */}
                 <div className="relative">
-                  <label className="block text-xs font-medium text-[#94A3B8] mb-1.5 uppercase tracking-wider">
+                  <label
+                    className="block text-[10px] font-medium uppercase tracking-wider mb-1.5"
+                    style={{ color: '#555555' }}
+                  >
                     Community
                   </label>
                   <button
                     type="button"
                     onClick={() => setIsCommunityOpen(!isCommunityOpen)}
-                    className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors cursor-pointer"
+                    style={{
+                      background: '#1A1A1A',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                      color: selectedCommunity ? '#F5F5F5' : '#555555',
+                    }}
                   >
-                    <span className={selectedCommunity ? 'text-white' : 'text-[#94A3B8]'}>
-                      {selectedCommunity || 'Select a community...'}
-                    </span>
+                    <span>{selectedCommunity || 'Select community...'}</span>
                     <ChevronDown
-                      size={16}
-                      className={`text-[#94A3B8] transition-transform duration-200 ${isCommunityOpen ? 'rotate-180' : ''}`}
+                      size={14}
+                      style={{ color: '#555555' }}
+                      className={`transition-transform duration-150 ${isCommunityOpen ? 'rotate-180' : ''}`}
                     />
                   </button>
 
                   <AnimatePresence>
                     {isCommunityOpen && (
                       <motion.div
-                        initial={{ opacity: 0, y: -5 }}
+                        initial={{ opacity: 0, y: -4 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -5 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute top-full left-0 right-0 mt-1.5 glass-strong rounded-xl overflow-hidden z-10"
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.12 }}
+                        className="absolute top-full left-0 right-0 mt-1 rounded-md overflow-hidden z-10"
+                        style={{
+                          background: '#1A1A1A',
+                          border: '1px solid rgba(255,255,255,0.08)',
+                        }}
                       >
                         {COMMUNITIES.map((community) => (
                           <button
@@ -118,18 +146,26 @@ export function CreatePostModal() {
                               setSelectedCommunity(community.name)
                               setIsCommunityOpen(false)
                             }}
-                            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+                            className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-left transition-colors cursor-pointer"
+                            style={{ color: '#888888' }}
+                            onMouseEnter={(e) => {
+                              (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'
+                              ;(e.currentTarget as HTMLElement).style.color = '#F5F5F5'
+                            }}
+                            onMouseLeave={(e) => {
+                              (e.currentTarget as HTMLElement).style.background = 'transparent'
+                              ;(e.currentTarget as HTMLElement).style.color = '#888888'
+                            }}
                           >
-                            <div
-                              className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold"
+                            <span
+                              className="w-5 h-5 rounded-sm flex items-center justify-center text-[9px] font-bold"
                               style={{
-                                backgroundColor: `${community.color}20`,
-                                border: `1px solid ${community.color}`,
-                                color: community.color,
+                                background: 'rgba(199,255,63,0.08)',
+                                color: '#C7FF3F',
                               }}
                             >
-                              {community.name.charAt(2)}
-                            </div>
+                              {community.name.charAt(2).toUpperCase()}
+                            </span>
                             {community.name}
                           </button>
                         ))}
@@ -140,75 +176,92 @@ export function CreatePostModal() {
 
                 {/* Title */}
                 <div>
-                  <label className="block text-xs font-medium text-[#94A3B8] mb-1.5 uppercase tracking-wider">
+                  <label
+                    className="block text-[10px] font-medium uppercase tracking-wider mb-1.5"
+                    style={{ color: '#555555' }}
+                  >
                     Title
                   </label>
                   <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="What's on your mind?"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder:text-[#94A3B8]/60 focus:border-[#7C4DFF]/40 focus:bg-white/[0.06] focus:outline-none transition-colors"
+                    placeholder="What's happening?"
+                    className="w-full px-3 py-2 rounded-md text-sm outline-none transition-colors"
+                    style={{
+                      background: '#1A1A1A',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                      color: '#F5F5F5',
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(199,255,63,0.3)'
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'
+                    }}
                     maxLength={300}
                   />
                 </div>
 
                 {/* Content */}
                 <div>
-                  <label className="block text-xs font-medium text-[#94A3B8] mb-1.5 uppercase tracking-wider">
+                  <label
+                    className="block text-[10px] font-medium uppercase tracking-wider mb-1.5"
+                    style={{ color: '#555555' }}
+                  >
                     Content
                   </label>
                   <textarea
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
-                    placeholder="Share your thoughts with the nebula..."
+                    placeholder="Share your thoughts..."
                     rows={5}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder:text-[#94A3B8]/60 focus:border-[#7C4DFF]/40 focus:bg-white/[0.06] focus:outline-none transition-colors resize-none min-h-[120px]"
+                    className="w-full px-3 py-2 rounded-md text-sm outline-none transition-colors resize-none min-h-[120px]"
+                    style={{
+                      background: '#1A1A1A',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                      color: '#F5F5F5',
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(199,255,63,0.3)'
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'
+                    }}
                   />
-                </div>
-
-                {/* Image upload area */}
-                <div>
-                  <label className="block text-xs font-medium text-[#94A3B8] mb-1.5 uppercase tracking-wider">
-                    Image (optional)
-                  </label>
-                  <div className="border-2 border-dashed border-white/[0.08] rounded-xl p-6 flex flex-col items-center justify-center gap-2 hover:border-[#7C4DFF]/30 hover:bg-white/[0.02] transition-colors cursor-pointer">
-                    <div className="w-10 h-10 rounded-full bg-white/[0.05] flex items-center justify-center">
-                      <ImagePlus size={20} className="text-[#94A3B8]" />
-                    </div>
-                    <p className="text-xs text-[#94A3B8]">
-                      Click to upload or drag & drop
-                    </p>
-                    <p className="text-[10px] text-[#94A3B8]/50">
-                      PNG, JPG, GIF up to 10MB
-                    </p>
-                  </div>
                 </div>
               </div>
 
               {/* Footer */}
-              <div className="flex items-center justify-end gap-3 p-5 pt-2 border-t border-white/5">
-                <motion.button
+              <div
+                className="flex items-center justify-end gap-3 px-5 h-12 flex-shrink-0"
+                style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+              >
+                <button
                   onClick={handleClose}
-                  className="px-4 py-2 rounded-xl text-sm text-[#94A3B8] hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
+                  className="px-3 py-1.5 rounded text-xs font-medium cursor-pointer transition-colors"
+                  style={{ color: '#888888' }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.color = '#F5F5F5'
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.color = '#888888'
+                  }}
                 >
                   Cancel
-                </motion.button>
+                </button>
                 <motion.button
                   onClick={handlePost}
                   disabled={!isFormValid}
-                  className="px-5 py-2 rounded-xl text-sm font-medium text-white transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-4 py-1.5 rounded text-xs font-medium cursor-pointer transition-opacity disabled:cursor-not-allowed disabled:opacity-30"
                   style={{
-                    background: isFormValid
-                      ? 'linear-gradient(135deg, #7C4DFF, #00E5FF)'
-                      : 'rgba(255,255,255,0.05)',
+                    background: isFormValid ? '#C7FF3F' : '#1A1A1A',
+                    color: isFormValid ? '#0D0D0D' : '#555555',
                   }}
-                  whileHover={isFormValid ? { scale: 1.03 } : {}}
+                  whileHover={isFormValid ? { opacity: 0.9 } : {}}
                   whileTap={isFormValid ? { scale: 0.97 } : {}}
                 >
-                  Post Thread
+                  Post
                 </motion.button>
               </div>
             </div>

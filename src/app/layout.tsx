@@ -1,29 +1,29 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "@/components/ui/toaster";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-display",
   subsets: ["latin"],
+  display: "swap",
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
-  title: "Nebula Threads — The Future of Digital Communities",
-  description: "Discover immersive discussions, futuristic communities, and real-time social experiences on Nebula Threads.",
-  keywords: ["Nebula Threads", "social media", "communities", "discussions", "futuristic"],
-  authors: [{ name: "Nebula Threads" }],
+  title: "Nebula — Digital Community OS",
+  description: "The operating system for digital communities. Built for the next era of social.",
   icons: {
     icon: "/logo.svg",
   },
   openGraph: {
-    title: "Nebula Threads",
-    description: "The Future of Digital Communities",
+    title: "Nebula",
+    description: "Digital Community OS",
     type: "website",
   },
 };
@@ -36,11 +36,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className="dark">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        style={{ background: '#060816', color: '#FFFFFF' }}
+        className={`${inter.variable} ${spaceGrotesk.variable} antialiased noise`}
+        style={{ background: '#0D0D0D', color: '#F5F5F5' }}
       >
         {children}
-        <Toaster />
       </body>
     </html>
   );

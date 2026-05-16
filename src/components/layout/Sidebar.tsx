@@ -1,30 +1,22 @@
 'use client'
 
+import { useState, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Home,
-  TrendingUp,
-  Users,
   Compass,
+  Users,
   MessageCircle,
   Bookmark,
   User,
   Settings,
-  ChevronsLeft,
-  ChevronsRight,
 } from 'lucide-react'
 import { useAppStore, type ViewType } from '@/stores/app-store'
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from '@/components/ui/tooltip'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
 interface NavItem {
@@ -35,251 +27,243 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { icon: Home, label: 'Home', view: 'feed' },
-  { icon: TrendingUp, label: 'Trending', view: 'explore' },
-  { icon: Users, label: 'Communities', view: 'community' },
   { icon: Compass, label: 'Explore', view: 'explore' },
+  { icon: Users, label: 'Communities', view: 'community' },
   { icon: MessageCircle, label: 'Messages', view: 'messages' },
   { icon: Bookmark, label: 'Saved', view: 'saved' },
   { icon: User, label: 'Profile', view: 'profile' },
   { icon: Settings, label: 'Settings', view: 'settings' },
 ]
 
-function NavItemButton({
-  item,
-  isActive,
-  collapsed,
-  onClick,
-}: {
-  item: NavItem
-  isActive: boolean
-  collapsed: boolean
-  onClick: () => void
-}) {
-  const buttonContent = (
-    <motion.button
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.97 }}
-      onClick={onClick}
-      className={`
-        relative flex items-center w-full rounded-lg transition-all duration-200
-        ${collapsed ? 'justify-center px-2 py-3' : 'gap-3 px-3 py-2.5'}
-      `}
-      style={{
-        background: isActive
-          ? 'rgba(124,77,255,0.15)'
-          : 'transparent',
-        borderLeft: isActive
-          ? '2px solid #7C4DFF'
-          : '2px solid transparent',
-      }}
-    >
-      <motion.div
-        whileHover={{ scale: 1.05 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-      >
-        <item.icon
-          className="w-5 h-5 shrink-0"
-          style={{
-            color: isActive ? '#7C4DFF' : '#94A3B8',
-            filter: isActive ? 'drop-shadow(0 0 6px rgba(124,77,255,0.5))' : 'none',
-          }}
-        />
-      </motion.div>
-
-      {/* Label (hidden when collapsed) */}
-      <AnimatePresence>
-        {!collapsed && (
-          <motion.span
-            initial={{ opacity: 0, width: 0 }}
-            animate={{ opacity: 1, width: 'auto' }}
-            exit={{ opacity: 0, width: 0 }}
-            transition={{ duration: 0.2 }}
-            className="text-sm font-medium whitespace-nowrap overflow-hidden"
-            style={{ color: isActive ? '#FFFFFF' : '#94A3B8' }}
-          >
-            {item.label}
-          </motion.span>
-        )}
-      </AnimatePresence>
-
-      {/* Active glow indicator */}
-      {isActive && (
-        <motion.div
-          layoutId="activeGlow"
-          className="absolute inset-0 rounded-lg pointer-events-none"
-          style={{
-            boxShadow: '0 0 12px rgba(124,77,255,0.15)',
-          }}
-          transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-        />
-      )}
-    </motion.button>
-  )
-
-  // When collapsed, wrap in tooltip
-  if (collapsed) {
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>{buttonContent}</TooltipTrigger>
-        <TooltipContent
-          side="right"
-          sideOffset={8}
-          className="text-xs font-medium"
-          style={{
-            background: 'rgba(6,8,22,0.95)',
-            color: '#FFFFFF',
-            border: '1px solid rgba(255,255,255,0.1)',
-          }}
-        >
-          {item.label}
-        </TooltipContent>
-      </Tooltip>
-    )
-  }
-
-  return buttonContent
+const TRANSITION = {
+  duration: 0.3,
+  ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
 }
 
-function SidebarContent({ collapsed }: { collapsed: boolean }) {
+/* ─── Desktop sidebar ─── */
+function DesktopSidebar() {
   const { currentView, setView } = useAppStore()
+  const [expanded, setExpanded] = useState(false)
+  const collapseTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  return (
-    <div className="flex flex-col h-full">
-      {/* Navigation Items */}
-      <div className="flex-1 py-4 px-2 space-y-1">
-        {navItems.map((item) => (
-          <NavItemButton
-            key={item.label}
-            item={item}
-            isActive={currentView === item.view}
-            collapsed={collapsed}
-            onClick={() => setView(item.view)}
-          />
-        ))}
-      </div>
+  const handleMouseEnter = useCallback(() => {
+    if (collapseTimer.current) {
+      clearTimeout(collapseTimer.current)
+      collapseTimer.current = null
+    }
+    setExpanded(true)
+  }, [])
 
-      {/* Bottom Section */}
-      <div
-        className="p-3 space-y-3"
-        style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
-      >
-        {/* User Mini-Profile Card */}
-        <div
-          className={`flex items-center rounded-lg p-2 ${
-            collapsed ? 'justify-center' : 'gap-3'
-          }`}
-          style={{ background: 'rgba(255,255,255,0.03)' }}
-        >
-          <Avatar className="w-8 h-8 shrink-0">
-            <AvatarFallback
-              className="text-xs font-semibold"
-              style={{
-                background: 'linear-gradient(135deg, #7C4DFF, #00E5FF)',
-                color: '#FFFFFF',
-              }}
-            >
-              NT
-            </AvatarFallback>
-          </Avatar>
-          <AnimatePresence>
-            {!collapsed && (
-              <motion.div
-                initial={{ opacity: 0, width: 0 }}
-                animate={{ opacity: 1, width: 'auto' }}
-                exit={{ opacity: 0, width: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden whitespace-nowrap"
-              >
-                <p className="text-sm font-medium" style={{ color: '#FFFFFF' }}>
-                  Nebula User
-                </p>
-                <p className="text-xs" style={{ color: '#94A3B8' }}>
-                  @nebulauser
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
-    </div>
-  )
-}
+  const handleMouseLeave = useCallback(() => {
+    collapseTimer.current = setTimeout(() => {
+      setExpanded(false)
+    }, 300)
+  }, [])
 
-export default function Sidebar() {
-  const { sidebarOpen, sidebarCollapsed, setSidebarOpen, setSidebarCollapsed, isMobile } = useAppStore()
-
-  // Mobile Sidebar — Sheet/Drawer
-  if (isMobile) {
-    return (
-      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetContent
-          side="left"
-          className="w-72 p-0 border-none"
-          style={{
-            background: 'rgba(6,8,22,0.95)',
-            backdropFilter: 'blur(24px)',
-            WebkitBackdropFilter: 'blur(24px)',
-            borderRight: '1px solid rgba(255,255,255,0.06)',
-          }}
-        >
-          <SheetHeader className="p-4 pb-0">
-            <SheetTitle
-              className="text-left text-lg font-bold"
-              style={{
-                background: 'linear-gradient(135deg, #7C4DFF, #00E5FF)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              Nebula Threads
-            </SheetTitle>
-          </SheetHeader>
-          <SidebarContent collapsed={false} />
-        </SheetContent>
-      </Sheet>
-    )
-  }
-
-  // Desktop Sidebar
   return (
     <motion.aside
       initial={false}
-      animate={{ width: sidebarCollapsed ? 80 : 256 }}
-      transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-      className="fixed left-0 top-16 bottom-0 z-40 overflow-hidden"
+      animate={{ width: expanded ? 208 : 48 }}
+      transition={TRANSITION}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      className="fixed left-3 top-16 bottom-16 z-40 overflow-hidden rounded-2xl"
       style={{
-        background: 'rgba(6,8,22,0.6)',
-        backdropFilter: 'blur(24px)',
-        WebkitBackdropFilter: 'blur(24px)',
-        borderRight: '1px solid rgba(255,255,255,0.06)',
+        background: '#151515',
+        border: '1px solid rgba(255,255,255,0.06)',
       }}
     >
       <div className="flex flex-col h-full">
-        <SidebarContent collapsed={sidebarCollapsed} />
+        {/* Navigation items */}
+        <nav className="flex-1 py-3 px-1.5 space-y-0.5" aria-label="Main navigation">
+          {navItems.map((item) => {
+            const isActive = currentView === item.view
+            return (
+              <button
+                key={item.label}
+                onClick={() => setView(item.view)}
+                className={`
+                  relative flex items-center w-full rounded-lg transition-colors duration-150
+                  ${expanded ? 'gap-3 px-3 py-2' : 'justify-center px-2 py-2.5'}
+                `}
+                style={{
+                  background: isActive ? 'rgba(199,255,63,0.08)' : 'transparent',
+                  borderLeft: isActive && expanded ? '2px solid #C7FF3F' : '2px solid transparent',
+                }}
+                aria-label={item.label}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                <item.icon
+                  className="w-[18px] h-[18px] shrink-0"
+                  style={{ color: isActive ? '#C7FF3F' : '#555555' }}
+                />
 
-        {/* Collapse Toggle */}
-        <div className="px-2 pb-4">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="flex items-center justify-center w-full py-2 rounded-lg transition-colors"
-            style={{
-              background: 'rgba(255,255,255,0.04)',
-              color: '#94A3B8',
-            }}
+                {/* Label — visible when expanded */}
+                <AnimatePresence>
+                  {expanded && (
+                    <motion.span
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.15 }}
+                      className="text-xs font-medium whitespace-nowrap overflow-hidden"
+                      style={{ color: isActive ? '#C7FF3F' : '#888888' }}
+                    >
+                      {item.label}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+
+                {/* Active indicator for collapsed state */}
+                {isActive && !expanded && (
+                  <span
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-4 rounded-full"
+                    style={{ background: '#C7FF3F' }}
+                  />
+                )}
+              </button>
+            )
+          })}
+        </nav>
+
+        {/* Bottom user section */}
+        <div
+          className="px-2 pb-3"
+          style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+        >
+          <div
+            className={`flex items-center rounded-lg py-2 ${
+              expanded ? 'gap-2.5 px-2' : 'justify-center px-1'
+            }`}
           >
-            {sidebarCollapsed ? (
-              <ChevronsRight className="w-4 h-4" />
-            ) : (
-              <div className="flex items-center gap-2">
-                <ChevronsLeft className="w-4 h-4" />
-                <span className="text-xs font-medium">Collapse</span>
-              </div>
-            )}
-          </motion.button>
+            <Avatar className="w-6 h-6 shrink-0">
+              <AvatarFallback
+                className="text-[9px] font-semibold"
+                style={{
+                  background: '#1A1A1A',
+                  color: '#888888',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                }}
+              >
+                N
+              </AvatarFallback>
+            </Avatar>
+
+            <AnimatePresence>
+              {expanded && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="overflow-hidden whitespace-nowrap"
+                >
+                  <p className="text-xs font-medium" style={{ color: '#F5F5F5' }}>
+                    Nebula User
+                  </p>
+                  <p className="text-[10px]" style={{ color: '#555555' }}>
+                    @nebulauser
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
     </motion.aside>
   )
+}
+
+/* ─── Mobile sidebar (Sheet) ─── */
+function MobileSidebar() {
+  const { currentView, setView, sidebarExpanded, setSidebarExpanded } = useAppStore()
+
+  return (
+    <Sheet open={sidebarExpanded} onOpenChange={setSidebarExpanded}>
+      <SheetContent
+        side="left"
+        className="w-64 p-0 border-none rounded-r-2xl"
+        style={{
+          background: '#151515',
+          borderRight: '1px solid rgba(255,255,255,0.06)',
+        }}
+      >
+        <SheetTitle className="sr-only">Navigation</SheetTitle>
+        <div className="flex flex-col h-full pt-12">
+          {/* Navigation items */}
+          <nav className="flex-1 py-4 px-3 space-y-0.5" aria-label="Main navigation">
+            {navItems.map((item) => {
+              const isActive = currentView === item.view
+              return (
+                <button
+                  key={item.label}
+                  onClick={() => {
+                    setView(item.view)
+                    setSidebarExpanded(false)
+                  }}
+                  className="relative flex items-center w-full gap-3 rounded-lg px-3 py-2.5 transition-colors duration-150"
+                  style={{
+                    background: isActive ? 'rgba(199,255,63,0.08)' : 'transparent',
+                    borderLeft: isActive ? '2px solid #C7FF3F' : '2px solid transparent',
+                  }}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  <item.icon
+                    className="w-[18px] h-[18px] shrink-0"
+                    style={{ color: isActive ? '#C7FF3F' : '#555555' }}
+                  />
+                  <span
+                    className="text-xs font-medium"
+                    style={{ color: isActive ? '#C7FF3F' : '#888888' }}
+                  >
+                    {item.label}
+                  </span>
+                </button>
+              )
+            })}
+          </nav>
+
+          {/* Bottom user section */}
+          <div
+            className="px-3 pb-4"
+            style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+          >
+            <div className="flex items-center gap-2.5 rounded-lg py-2 px-2">
+              <Avatar className="w-6 h-6 shrink-0">
+                <AvatarFallback
+                  className="text-[9px] font-semibold"
+                  style={{
+                    background: '#1A1A1A',
+                    color: '#888888',
+                    border: '1px solid rgba(255,255,255,0.06)',
+                  }}
+                >
+                  N
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="text-xs font-medium" style={{ color: '#F5F5F5' }}>
+                  Nebula User
+                </p>
+                <p className="text-[10px]" style={{ color: '#555555' }}>
+                  @nebulauser
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+  )
+}
+
+/* ─── Main export ─── */
+export default function Sidebar() {
+  const { isMobile } = useAppStore()
+
+  if (isMobile) {
+    return <MobileSidebar />
+  }
+
+  return <DesktopSidebar />
 }

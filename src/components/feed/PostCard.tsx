@@ -40,7 +40,6 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
 
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation()
-    // Share logic placeholder
   }
 
   const handleComment = (e: React.MouseEvent) => {
@@ -50,27 +49,23 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
 
   return (
     <motion.article
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
-        duration: 0.4,
-        delay: index * 0.06,
+        duration: 0.35,
+        delay: index * 0.05,
         ease: [0.25, 0.46, 0.45, 0.94],
       }}
-      whileHover={{
-        y: -2,
-        boxShadow: '0 0 30px rgba(124,77,255,0.1)',
-        borderColor: 'rgba(124,77,255,0.2)',
-      }}
       onClick={handleCardClick}
-      className="glass-card p-4 sm:p-5 cursor-pointer transition-colors duration-200 group relative overflow-hidden"
+      className="surface rounded-lg cursor-pointer transition-premium group"
+      whileHover={{
+        y: -1,
+        boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+      }}
     >
-      {/* Subtle gradient overlay on hover */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#7C4DFF]/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-
-      <div className="relative flex gap-3 sm:gap-4">
+      <div className="flex gap-3 p-4">
         {/* Vote column */}
-        <div className="flex-shrink-0 pt-1">
+        <div className="flex-shrink-0 pt-0.5">
           <VoteButton
             initialVotes={post.votes}
             initialUserVote={post.userVote}
@@ -80,104 +75,83 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
 
         {/* Content column */}
         <div className="flex-1 min-w-0">
-          {/* Header */}
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
-            {/* Community avatar */}
-            <div
-              className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
-              style={{
-                backgroundColor: `${post.community.color}20`,
-                border: `1.5px solid ${post.community.color}`,
-                color: post.community.color,
-              }}
-            >
-              {post.community.avatar}
-            </div>
-
-            {/* Community name */}
-            <span className="text-sm font-medium text-[#7C4DFF] truncate">
+          {/* Header row: community · author · time */}
+          <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+            <span className="accent-text text-xs font-medium">
               {post.community.name}
             </span>
-
-            <span className="text-[#94A3B8] text-xs">·</span>
-
-            {/* Author */}
-            <span className="text-xs text-[#94A3B8] truncate">
+            <span className="text-tertiary text-xs">·</span>
+            <span className="text-secondary text-xs">
               {post.author.name}
             </span>
-
-            <span className="text-[#94A3B8] text-xs">·</span>
-
-            {/* Timestamp */}
-            <span className="text-xs text-[#94A3B8] flex-shrink-0">
+            <span className="text-tertiary text-xs">·</span>
+            <span className="text-tertiary text-xs flex-shrink-0">
               {post.timestamp}
             </span>
           </div>
 
           {/* Title */}
-          <h3 className="text-base sm:text-lg font-semibold text-white mb-1.5 leading-snug">
+          <h3
+            className="font-display font-semibold text-base leading-snug mb-1 line-clamp-2"
+            style={{ color: '#F5F5F5' }}
+          >
             {post.title}
           </h3>
 
           {/* Content preview */}
-          <p className="text-sm text-[#94A3B8] line-clamp-3 mb-3 leading-relaxed">
+          <p className="text-secondary text-sm line-clamp-2 leading-relaxed mb-3">
             {post.content}
           </p>
 
           {/* Optional image */}
           {post.image && (
-            <div className="mb-3 relative group/img">
-              <div className="absolute -inset-[1px] rounded-xl bg-gradient-to-r from-[#7C4DFF]/20 via-[#00E5FF]/20 to-[#7C4DFF]/20 opacity-0 group-hover/img:opacity-100 transition-opacity duration-300" />
+            <div className="mb-3">
               <img
                 src={post.image}
                 alt={post.title}
-                className="relative w-full max-h-72 object-cover rounded-xl border border-white/5"
+                className="w-full max-h-64 object-cover rounded border border-white/[0.06]"
                 loading="lazy"
               />
             </div>
           )}
 
-          {/* Footer actions */}
-          <div className="flex items-center gap-1 sm:gap-2 -ml-2">
-            {/* Comments */}
-            <motion.button
+          {/* Footer: small text actions */}
+          <div className="flex items-center gap-3">
+            <button
               onClick={handleComment}
-              className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[#94A3B8] hover:bg-white/5 hover:text-white transition-colors duration-200 text-xs sm:text-sm cursor-pointer"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
+              className="flex items-center gap-1 text-tertiary text-xs hover:text-secondary transition-colors duration-150 cursor-pointer"
               aria-label={`${post.comments} comments`}
             >
-              <MessageCircle size={16} />
+              <MessageCircle size={13} />
               <span>{post.comments}</span>
-            </motion.button>
+            </button>
 
-            {/* Share */}
-            <motion.button
+            <button
               onClick={handleShare}
-              className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[#94A3B8] hover:bg-white/5 hover:text-white transition-colors duration-200 text-xs sm:text-sm cursor-pointer"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
+              className="flex items-center gap-1 text-tertiary text-xs hover:text-secondary transition-colors duration-150 cursor-pointer"
               aria-label="Share"
             >
-              <Share2 size={16} />
-              <span className="hidden sm:inline">Share</span>
-            </motion.button>
+              <Share2 size={13} />
+              <span>Share</span>
+            </button>
 
-            {/* Save */}
-            <motion.button
+            <button
               onClick={handleSave}
-              className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg transition-colors duration-200 text-xs sm:text-sm cursor-pointer ml-auto"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
-              aria-label={isSaved ? 'Unsave' : 'Save'}
+              className="flex items-center gap-1 text-xs transition-colors duration-150 cursor-pointer ml-auto"
               style={{
-                color: isSaved ? '#7C4DFF' : '#94A3B8',
-                backgroundColor: isSaved ? 'rgba(124,77,255,0.1)' : 'transparent',
+                color: isSaved ? '#C7FF3F' : '#555555',
               }}
+              onMouseEnter={(e) => {
+                if (!isSaved) (e.currentTarget as HTMLElement).style.color = '#888888'
+              }}
+              onMouseLeave={(e) => {
+                if (!isSaved) (e.currentTarget as HTMLElement).style.color = '#555555'
+              }}
+              aria-label={isSaved ? 'Unsave' : 'Save'}
             >
-              <Bookmark size={16} fill={isSaved ? '#7C4DFF' : 'none'} />
-              <span className="hidden sm:inline">{isSaved ? 'Saved' : 'Save'}</span>
-            </motion.button>
+              <Bookmark size={13} fill={isSaved ? '#C7FF3F' : 'none'} />
+              <span>{isSaved ? 'Saved' : 'Save'}</span>
+            </button>
           </div>
         </div>
       </div>

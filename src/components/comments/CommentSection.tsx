@@ -1,8 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { Send, MessageSquare } from 'lucide-react'
 import { CommentItem, type Comment } from './CommentItem'
 
 interface CommentSectionProps {
@@ -12,139 +10,113 @@ interface CommentSectionProps {
 const sampleComments: Comment[] = [
   {
     id: '1',
-    author: { name: 'Nova Sterling', avatar: 'NS', color: '#7C4DFF' },
+    author: { name: 'dstruct', avatar: 'DS', color: '#C7FF3F' },
     content:
-      'This is absolutely mind-blowing! The way you integrated the neural interface with the quantum processors is next level. I\'ve been working on something similar but your approach to the entanglement layer is much more elegant.',
+      'The surface code approach is solid but I keep coming back to the same question — what\'s the qubit overhead when you account for the logical error rate they actually measured? 99.9% sounds great until you realize the sampling was done on a 72-qubit system with heavy postselection.',
     timestamp: '2h ago',
-    votes: 42,
+    votes: 47,
     userVote: null,
-    reactions: [
-      { emoji: '👍', count: 12, active: false },
-      { emoji: '🚀', count: 5, active: false },
-      { emoji: '💡', count: 3, active: false },
-    ],
     replies: [
       {
         id: '1-1',
-        author: { name: 'Kai Nexus', avatar: 'KN', color: '#00E5FF' },
+        author: { name: 'qbit_flip', avatar: 'QF', color: '#888888' },
         content:
-          'Thanks Nova! The entanglement layer was actually inspired by your paper on quantum state coherence. Your work on the stabilization algorithms was foundational.',
+          'Exactly. They excluded ~30% of shots in the supplemental material. Still impressive, but the headline number is doing a lot of work. Compare to Google\'s 2023 results where they reported 99.6% without postselection — more honest benchmark.',
         timestamp: '1h ago',
-        votes: 18,
+        votes: 23,
         userVote: null,
-        reactions: [
-          { emoji: '❤️', count: 4, active: false },
-          { emoji: '💡', count: 2, active: false },
-        ],
         replies: [
           {
             id: '1-1-1',
-            author: { name: 'Zara Flux', avatar: 'ZF', color: '#FF4DA6' },
+            author: { name: 'error_corr', avatar: 'EC', color: '#555555' },
             content:
-              'The stabilization algorithms are brilliant, but have you considered the decoherence issues at scale? I ran into similar problems with my distributed node network.',
+              'The postselection caveat is fair but you\'re comparing different code distances. Google was d=3, IBM is d=5. At d=5 even Google\'s numbers would look different. The scaling argument is what matters here.',
             timestamp: '45m ago',
-            votes: 7,
+            votes: 11,
             userVote: null,
-            reactions: [{ emoji: '👍', count: 3, active: false }],
             replies: [],
           },
           {
             id: '1-1-2',
-            author: { name: 'Nova Sterling', avatar: 'NS', color: '#7C4DFF' },
+            author: { name: 'dstruct', avatar: 'DS', color: '#C7FF3F' },
             content:
-              'Great point Zara. The scale issue is something we addressed in v2 using adaptive error correction. Happy to share the methodology!',
+              'Fair point on code distance. I\'d just like to see both numbers reported side by side instead of burying one in supplementary. The community needs better norms around this.',
             timestamp: '30m ago',
-            votes: 5,
+            votes: 8,
             userVote: null,
-            reactions: [{ emoji: '🎉', count: 2, active: false }],
             replies: [],
           },
         ],
       },
       {
         id: '1-2',
-        author: { name: 'Rex Orion', avatar: 'RO', color: '#FF6B35' },
+        author: { name: 'lambda_calc', avatar: 'LC', color: '#888888' },
         content:
-          'The quantum processing angle is fascinating. How does this compare to traditional approaches in terms of latency?',
+          'Anyone have the breakdown on coherence times per qubit? The T1 numbers in their previous chip were all over the place — 80us to 300us depending on location.',
         timestamp: '1h ago',
-        votes: 9,
+        votes: 14,
         userVote: null,
-        reactions: [{ emoji: '💡', count: 4, active: false }],
         replies: [],
       },
     ],
   },
   {
     id: '2',
-    author: { name: 'Luna Vortex', avatar: 'LV', color: '#00E5FF' },
+    author: { name: 'sys_op', avatar: 'SO', color: '#888888' },
     content:
-      'I just deployed this on our production cluster and the performance gains are unreal. 3x throughput improvement with zero downtime during the transition. The team is incredibly impressed.',
+      'Ran the reference implementation on our cluster last night. 3.2x throughput improvement on the decoding step alone. The parallelized MWPM decoder is a genuine contribution — previous implementations were the bottleneck, not the physics.',
     timestamp: '3h ago',
-    votes: 31,
+    votes: 36,
     userVote: null,
-    reactions: [
-      { emoji: '🚀', count: 8, active: false },
-      { emoji: '🎉', count: 6, active: false },
-    ],
     replies: [
       {
         id: '2-1',
-        author: { name: 'Kai Nexus', avatar: 'KN', color: '#00E5FF' },
+        author: { name: 'rust_qc', avatar: 'RQ', color: '#555555' },
         content:
-          'That\'s awesome to hear Luna! The zero-downtime migration was a key design goal. Would love to hear more about your deployment setup.',
+          'What hardware? We\'re seeing similar gains on H100s but the decoder latency is still too high for real-time feedback at d>7. Curious if you tested higher distances.',
         timestamp: '2h ago',
-        votes: 11,
+        votes: 12,
         userVote: null,
-        reactions: [{ emoji: '❤️', count: 3, active: false }],
         replies: [],
       },
     ],
   },
   {
     id: '3',
-    author: { name: 'Ember Synth', avatar: 'ES', color: '#FF4DA6' },
+    author: { name: 'paper_audit', avatar: 'PA', color: '#888888' },
     content:
-      'The documentation on this is top-notch. Clear examples, great API reference, and the interactive playground makes it so easy to prototype. This is how developer tools should be built. 🎯',
+      'The API design choices in the SDK are... interesting. Why expose the syndrome extraction cycle as a blocking call? Should be event-driven. Also the default decoder config silently falls back to a less accurate algorithm if you don\'t explicitly set the code distance. Found that out the hard way.',
     timestamp: '5h ago',
-    votes: 24,
+    votes: 28,
     userVote: null,
-    reactions: [
-      { emoji: '👍', count: 9, active: false },
-      { emoji: '❤️', count: 5, active: false },
-      { emoji: '💡', count: 3, active: false },
-    ],
     replies: [],
   },
   {
     id: '4',
-    author: { name: 'Atlas Drift', avatar: 'AD', color: '#7C4DFF' },
+    author: { name: 'tensor_wd', avatar: 'TW', color: '#555555' },
     content:
-      'Interesting approach, but I have some concerns about the memory overhead when running at full capacity. In my benchmarks, I noticed about 15% more memory consumption compared to the baseline. Has anyone else observed this?',
+      'Memory overhead is the elephant in the room nobody wants to talk about. Our benchmarks show 15-18% more memory consumption vs. baseline at scale. The syndrome history buffer grows faster than O(d²) in practice because of the way they handle correlated errors.',
     timestamp: '6h ago',
-    votes: 15,
+    votes: 19,
     userVote: null,
-    reactions: [
-      { emoji: '💡', count: 7, active: false },
-    ],
     replies: [
       {
         id: '4-1',
-        author: { name: 'Kai Nexus', avatar: 'KN', color: '#00E5FF' },
+        author: { name: 'cache_miss', avatar: 'CM', color: '#C7FF3F' },
         content:
-          'Good catch Atlas. The memory overhead is primarily from the caching layer. You can reduce it by ~40% by tuning the cache_ttl parameter. I\'ll add a section to the docs about memory optimization.',
+          'Set history_window to the minimum and you drop to ~6%. The default is 10x what you need for d=5. It\'s documented but buried in the advanced config section. Agree it should be the default.',
         timestamp: '5h ago',
-        votes: 8,
+        votes: 15,
         userVote: null,
-        reactions: [{ emoji: '👍', count: 4, active: false }],
         replies: [
           {
             id: '4-1-1',
-            author: { name: 'Atlas Drift', avatar: 'AD', color: '#7C4DFF' },
-            content: 'That did the trick! Down to just 5% overhead now. Thanks for the quick help! 🙏',
+            author: { name: 'tensor_wd', avatar: 'TW', color: '#555555' },
+            content:
+              'That worked, down to 5.8%. Thanks. They should really surface that config better — wasted two days profiling this.',
             timestamp: '4h ago',
-            votes: 3,
+            votes: 6,
             userVote: null,
-            reactions: [{ emoji: '🎉', count: 1, active: false }],
             replies: [],
           },
         ],
@@ -153,16 +125,12 @@ const sampleComments: Comment[] = [
   },
   {
     id: '5',
-    author: { name: 'Pixel Sage', avatar: 'PS', color: '#00E5FF' },
+    author: { name: 'neil_g', avatar: 'NG', color: '#888888' },
     content:
-      'The visual debugging tools are a game-changer. Being able to see the data flow through the pipeline in real-time makes debugging so much faster. This is the kind of DX that makes me love a framework.',
+      'The visualization layer is the best part of this release. Finally someone built a proper Pauli frame visualizer that doesn\'t require importing into some janky MATLAB script. The timeline view alone saves hours of debugging. More of this please.',
     timestamp: '8h ago',
-    votes: 19,
+    votes: 22,
     userVote: null,
-    reactions: [
-      { emoji: '🚀', count: 4, active: false },
-      { emoji: '❤️', count: 3, active: false },
-    ],
     replies: [],
   },
 ]
@@ -178,12 +146,11 @@ export function CommentSection({ postId }: CommentSectionProps) {
 
     const comment: Comment = {
       id: `new-${Date.now()}`,
-      author: { name: 'You', avatar: 'YU', color: '#7C4DFF' },
+      author: { name: 'you', avatar: 'YU', color: '#C7FF3F' },
       content: newComment,
       timestamp: 'Just now',
       votes: 0,
       userVote: null,
-      reactions: [],
       replies: [],
     }
 
@@ -205,12 +172,11 @@ export function CommentSection({ postId }: CommentSectionProps) {
               ...c.replies,
               {
                 id: `reply-${Date.now()}`,
-                author: { name: 'You', avatar: 'YU', color: '#7C4DFF' },
+                author: { name: 'you', avatar: 'YU', color: '#C7FF3F' },
                 content,
                 timestamp: 'Just now',
                 votes: 0,
                 userVote: null,
-                reactions: [],
                 replies: [],
               },
             ],
@@ -222,10 +188,6 @@ export function CommentSection({ postId }: CommentSectionProps) {
     setComments(addReply(comments))
   }
 
-  const handleReact = (_id: string, _emoji: string) => {
-    // In a real app, this would call an API
-  }
-
   const commentCount = (() => {
     const count = (cs: Comment[]): number =>
       cs.reduce((acc, c) => acc + 1 + count(c.replies), 0)
@@ -235,14 +197,20 @@ export function CommentSection({ postId }: CommentSectionProps) {
   return (
     <div className="w-full max-w-3xl mx-auto">
       {/* Header */}
-      <div className="flex items-center gap-2 mb-6">
-        <MessageSquare className="w-5 h-5" style={{ color: '#7C4DFF' }} />
-        <h2 className="text-lg font-semibold text-white">
+      <div className="flex items-center gap-3 mb-6">
+        <h2
+          className="font-semibold"
+          style={{
+            fontFamily: 'var(--font-display)',
+            color: '#F5F5F5',
+            fontSize: '1rem',
+          }}
+        >
           Discussion
         </h2>
         <span
-          className="text-sm px-2 py-0.5 rounded-full"
-          style={{ background: 'rgba(124,77,255,0.15)', color: '#7C4DFF' }}
+          className="accent-bg-subtle text-xs px-2 py-0.5 rounded-full tabular-nums"
+          style={{ fontFamily: 'var(--font-inter)' }}
         >
           {commentCount}
         </span>
@@ -250,66 +218,49 @@ export function CommentSection({ postId }: CommentSectionProps) {
 
       {/* Comment input */}
       <div
-        className="rounded-xl p-4 mb-6 border backdrop-blur-xl"
-        style={{
-          background: 'rgba(15,18,40,0.6)',
-          borderColor: 'rgba(124,77,255,0.2)',
-        }}
+        className="surface rounded-lg p-4 mb-6"
       >
-        <div className="flex gap-3">
-          <div
-            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+        <textarea
+          className="w-full rounded-md p-3 text-sm resize-none border transition-colors duration-200 focus:outline-none"
+          style={{
+            background: '#1A1A1A',
+            borderColor: 'rgba(255,255,255,0.06)',
+            color: '#F5F5F5',
+            minHeight: '80px',
+            fontFamily: 'var(--font-inter)',
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = 'rgba(199,255,63,0.3)'
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'
+          }}
+          placeholder="Add to discussion..."
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+        />
+        <div className="flex justify-end mt-2">
+          <button
+            className="accent-bg text-xs px-4 py-1.5 rounded-md font-medium disabled:opacity-30 transition-opacity duration-200"
             style={{
-              background: 'linear-gradient(135deg, #7C4DFF40, #7C4DFF20)',
-              border: '2px solid #7C4DFF',
-              color: '#fff',
+              fontFamily: 'var(--font-inter)',
             }}
+            onClick={handleSubmit}
+            disabled={!newComment.trim()}
           >
-            YU
-          </div>
-          <div className="flex-1">
-            <textarea
-              className="w-full rounded-lg p-3 text-sm resize-none border focus:outline-none focus:ring-1 placeholder:text-slate-500"
-              style={{
-                background: 'rgba(6,8,22,0.6)',
-                borderColor: 'rgba(124,77,255,0.15)',
-                color: '#E2E8F0',
-                minHeight: '80px',
-              }}
-              placeholder="Add to the discussion..."
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-            />
-            <div className="flex justify-end mt-2">
-              <motion.button
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-40"
-                style={{
-                  background: newComment.trim()
-                    ? 'linear-gradient(135deg, #7C4DFF, #00E5FF)'
-                    : 'rgba(124,77,255,0.2)',
-                }}
-                whileHover={newComment.trim() ? { scale: 1.02 } : undefined}
-                whileTap={newComment.trim() ? { scale: 0.98 } : undefined}
-                onClick={handleSubmit}
-                disabled={!newComment.trim()}
-              >
-                <Send className="w-4 h-4" />
-                Post Comment
-              </motion.button>
-            </div>
-          </div>
+            Post
+          </button>
         </div>
       </div>
 
       {/* Comments list */}
-      <div className="space-y-2">
+      <div className="space-y-0.5">
         {comments.map((comment) => (
           <CommentItem
             key={comment.id}
             comment={comment}
             onVote={handleVote}
             onReply={handleReply}
-            onReact={handleReact}
           />
         ))}
       </div>

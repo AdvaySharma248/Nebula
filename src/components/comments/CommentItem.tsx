@@ -2,8 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown, ChevronUp, MessageCircle, Share2, ThumbsUp, ThumbsDown } from 'lucide-react'
-import { ProfileHoverCard } from '@/components/shared/ProfileHoverCard'
+import { ChevronUp, ChevronDown } from 'lucide-react'
 
 export interface Comment {
   id: string
@@ -13,7 +12,6 @@ export interface Comment {
   votes: number
   userVote: 'up' | 'down' | null
   replies: Comment[]
-  reactions: { emoji: string; count: number; active: boolean }[]
 }
 
 interface CommentItemProps {
@@ -21,7 +19,6 @@ interface CommentItemProps {
   depth?: number
   onVote?: (id: string, direction: 'up' | 'down') => void
   onReply?: (id: string, content: string) => void
-  onReact?: (id: string, emoji: string) => void
 }
 
 export function CommentItem({
@@ -29,25 +26,20 @@ export function CommentItem({
   depth = 0,
   onVote,
   onReply,
-  onReact,
 }: CommentItemProps) {
   const [collapsed, setCollapsed] = useState(false)
   const [replyOpen, setReplyOpen] = useState(false)
   const [replyText, setReplyText] = useState('')
   const [localVote, setLocalVote] = useState<'up' | 'down' | null>(comment.userVote)
-  const [localReactions, setLocalReactions] = useState(comment.reactions)
   const [voteCount, setVoteCount] = useState(comment.votes)
 
   const hasReplies = comment.replies.length > 0
-  const maxDepth = 3
 
   const handleVote = (direction: 'up' | 'down') => {
     if (localVote === direction) {
-      // Remove vote
       setVoteCount((v) => (direction === 'up' ? v - 1 : v + 1))
       setLocalVote(null)
     } else {
-      // Switch or add vote
       if (localVote) {
         setVoteCount((v) => (localVote === 'up' ? v - 1 : v + 1))
       }
@@ -57,17 +49,6 @@ export function CommentItem({
     onVote?.(comment.id, direction)
   }
 
-  const handleReact = (emoji: string) => {
-    setLocalReactions((prev) =>
-      prev.map((r) =>
-        r.emoji === emoji
-          ? { ...r, count: r.active ? r.count - 1 : r.count + 1, active: !r.active }
-          : r
-      )
-    )
-    onReact?.(comment.id, emoji)
-  }
-
   const handleReplySubmit = () => {
     if (!replyText.trim()) return
     onReply?.(comment.id, replyText)
@@ -75,44 +56,34 @@ export function CommentItem({
     setReplyOpen(false)
   }
 
+  const totalReplies = (() => {
+    const count = (cs: Comment[]): number =>
+      cs.reduce((acc, c) => acc + 1 + count(c.replies), 0)
+    return count(comment.replies)
+  })()
+
   return (
     <div className="relative">
-      {/* Indentation guide line */}
-      {depth > 0 && (
-        <div
-          className="absolute left-0 top-0 bottom-0 w-px"
-          style={{ background: 'rgba(124,77,255,0.2)', left: '-1rem' }}
-        />
-      )}
-
       <motion.div
-        className="rounded-lg p-3 transition-colors duration-200 hover:bg-white/[0.02]"
-        style={{ paddingLeft: depth > 0 ? '1rem' : undefined }}
+        className="rounded-md p-3 transition-colors duration-200"
+        style={{
+          paddingLeft: depth > 0 ? '1rem' : undefined,
+        }}
+        whileHover={{ backgroundColor: 'rgba(255,255,255,0.01)' }}
         initial={false}
       >
-        {/* Header */}
-        <div className="flex items-center gap-2 mb-2">
-          <ProfileHoverCard
-            name={comment.author.name}
-            username={comment.author.name.toLowerCase().replace(/\s/g, '')}
-            avatar={comment.author.avatar}
-            color={comment.author.color}
-            karma={Math.floor(Math.random() * 5000) + 500}
-            joinDate="Mar 2024"
+        {/* Header: author + timestamp inline */}
+        <div className="flex items-center gap-2 mb-1.5">
+          <span
+            className="text-sm font-medium"
+            style={{ color: '#F5F5F5', fontFamily: 'var(--font-inter)' }}
           >
-            <div
-              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 cursor-pointer"
-              style={{
-                background: `linear-gradient(135deg, ${comment.author.color}40, ${comment.author.color}20)`,
-                border: `2px solid ${comment.author.color}`,
-                color: '#fff',
-              }}
-            >
-              {comment.author.avatar}
-            </div>
-          </ProfileHoverCard>
-          <span className="text-white font-medium text-sm">{comment.author.name}</span>
-          <span className="text-xs" style={{ color: '#94A3B8' }}>
+            {comment.author.name}
+          </span>
+          <span
+            className="text-xs text-tertiary"
+            style={{ color: '#555555' }}
+          >
             {comment.timestamp}
           </span>
 
@@ -120,107 +91,80 @@ export function CommentItem({
           {hasReplies && (
             <button
               onClick={() => setCollapsed(!collapsed)}
-              className="ml-auto flex items-center gap-1 text-xs px-2 py-0.5 rounded-md transition-colors hover:bg-white/5"
-              style={{ color: '#94A3B8' }}
+              className="ml-auto flex items-center gap-1 text-xs px-1.5 py-0.5 rounded transition-colors duration-200"
+              style={{ color: '#555555' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#888888')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#555555')}
             >
               {collapsed ? (
                 <>
                   <ChevronDown className="w-3 h-3" />
-                  <span>{comment.replies.length}</span>
+                  <span>[{totalReplies}]</span>
                 </>
               ) : (
-                <ChevronUp className="w-3 h-3" />
+                <>
+                  <ChevronUp className="w-3 h-3" />
+                  <span>collapse</span>
+                </>
               )}
             </button>
           )}
         </div>
 
         {/* Content */}
-        <p className="text-sm leading-relaxed mb-2" style={{ color: '#E2E8F0' }}>
+        <p
+          className="text-sm leading-relaxed mb-2"
+          style={{ color: '#888888', fontFamily: 'var(--font-inter)' }}
+        >
           {comment.content}
         </p>
 
-        {/* Reactions */}
-        {localReactions.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-2">
-            {localReactions.map((reaction) => (
-              <motion.button
-                key={reaction.emoji}
-                className={`
-                  flex items-center gap-1 px-2 py-0.5 rounded-full text-xs
-                  transition-colors border
-                `}
-                style={{
-                  background: reaction.active
-                    ? 'rgba(124,77,255,0.2)'
-                    : 'rgba(255,255,255,0.03)',
-                  borderColor: reaction.active
-                    ? 'rgba(124,77,255,0.4)'
-                    : 'rgba(255,255,255,0.06)',
-                  color: reaction.active ? '#7C4DFF' : '#94A3B8',
-                }}
-                onClick={() => handleReact(reaction.emoji)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <span>{reaction.emoji}</span>
-                <span>{reaction.count}</span>
-              </motion.button>
-            ))}
-          </div>
-        )}
+        {/* Actions row: upvote · downvote · vote count · Reply */}
+        <div className="flex items-center gap-1">
+          <button
+            className="p-0.5 rounded transition-colors duration-200"
+            onClick={() => handleVote('up')}
+            style={{ color: localVote === 'up' ? '#C7FF3F' : '#555555' }}
+            onMouseEnter={(e) => {
+              if (localVote !== 'up') e.currentTarget.style.color = '#888888'
+            }}
+            onMouseLeave={(e) => {
+              if (localVote !== 'up') e.currentTarget.style.color = '#555555'
+            }}
+          >
+            <ChevronUp className="w-3.5 h-3.5" />
+          </button>
+          <span
+            className="text-xs min-w-[16px] text-center tabular-nums"
+            style={{ color: localVote === 'up' ? '#C7FF3F' : localVote === 'down' ? '#FF4444' : '#555555' }}
+          >
+            {voteCount}
+          </span>
+          <button
+            className="p-0.5 rounded transition-colors duration-200"
+            onClick={() => handleVote('down')}
+            style={{ color: localVote === 'down' ? '#FF4444' : '#555555' }}
+            onMouseEnter={(e) => {
+              if (localVote !== 'down') e.currentTarget.style.color = '#888888'
+            }}
+            onMouseLeave={(e) => {
+              if (localVote !== 'down') e.currentTarget.style.color = '#555555'
+            }}
+          >
+            <ChevronDown className="w-3.5 h-3.5" />
+          </button>
 
-        {/* Action row */}
-        <div className="flex items-center gap-3">
-          {/* Vote */}
-          <div className="flex items-center gap-0.5">
-            <motion.button
-              className="p-1 rounded transition-colors hover:bg-white/5"
-              onClick={() => handleVote('up')}
-              whileTap={{ scale: 0.9 }}
-            >
-              <ThumbsUp
-                className="w-3.5 h-3.5"
-                style={{ color: localVote === 'up' ? '#7C4DFF' : '#94A3B8' }}
-              />
-            </motion.button>
-            <span className="text-xs min-w-[20px] text-center" style={{ color: '#94A3B8' }}>
-              {voteCount}
-            </span>
-            <motion.button
-              className="p-1 rounded transition-colors hover:bg-white/5"
-              onClick={() => handleVote('down')}
-              whileTap={{ scale: 0.9 }}
-            >
-              <ThumbsDown
-                className="w-3.5 h-3.5"
-                style={{ color: localVote === 'down' ? '#FF4DA6' : '#94A3B8' }}
-              />
-            </motion.button>
-          </div>
+          <span className="text-tertiary text-xs mx-1" style={{ color: '#333333' }}>/</span>
 
-          {/* Reply */}
-          <motion.button
-            className="flex items-center gap-1 text-xs px-2 py-1 rounded-md transition-colors hover:bg-white/5"
-            style={{ color: '#94A3B8' }}
+          <button
+            className="text-xs px-1.5 py-0.5 rounded transition-colors duration-200"
+            style={{ color: '#555555' }}
             onClick={() => setReplyOpen(!replyOpen)}
-            whileHover={{ color: '#00E5FF' }}
-            whileTap={{ scale: 0.95 }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#888888')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = '#555555')}
           >
-            <MessageCircle className="w-3.5 h-3.5" />
-            <span>Reply</span>
-          </motion.button>
-
-          {/* Share */}
-          <motion.button
-            className="flex items-center gap-1 text-xs px-2 py-1 rounded-md transition-colors hover:bg-white/5"
-            style={{ color: '#94A3B8' }}
-            whileHover={{ color: '#00E5FF' }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Share2 className="w-3.5 h-3.5" />
-            <span>Share</span>
-          </motion.button>
+            Reply
+          </button>
         </div>
 
         {/* Inline reply textarea */}
@@ -230,17 +174,24 @@ export function CommentItem({
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
               className="overflow-hidden"
             >
-              <div className="mt-3 ml-9">
+              <div className="mt-3">
                 <textarea
-                  className="w-full rounded-lg p-3 text-sm resize-none border focus:outline-none focus:ring-1 placeholder:text-slate-500"
+                  className="w-full rounded-md p-3 text-sm resize-none border transition-colors duration-200 focus:outline-none"
                   style={{
-                    background: 'rgba(15,18,40,0.6)',
-                    borderColor: 'rgba(124,77,255,0.2)',
-                    color: '#E2E8F0',
-                    minHeight: '80px',
+                    background: '#1A1A1A',
+                    borderColor: 'rgba(255,255,255,0.06)',
+                    color: '#F5F5F5',
+                    minHeight: '72px',
+                    fontFamily: 'var(--font-inter)',
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(199,255,63,0.3)'
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'
                   }}
                   placeholder="Write a reply..."
                   value={replyText}
@@ -253,25 +204,24 @@ export function CommentItem({
                       setReplyOpen(false)
                       setReplyText('')
                     }}
-                    className="px-3 py-1.5 text-xs rounded-lg transition-colors"
-                    style={{ color: '#94A3B8' }}
+                    className="px-3 py-1.5 text-xs rounded-md transition-colors duration-200"
+                    style={{ color: '#555555' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = '#888888')}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = '#555555')}
                   >
                     Cancel
                   </button>
-                  <motion.button
-                    className="px-4 py-1.5 text-xs rounded-lg text-white font-medium disabled:opacity-40"
+                  <button
+                    className="px-3 py-1.5 text-xs rounded-md font-medium disabled:opacity-30 transition-opacity duration-200"
                     style={{
-                      background: replyText.trim()
-                        ? 'linear-gradient(135deg, #7C4DFF, #00E5FF)'
-                        : 'rgba(124,77,255,0.2)',
+                      background: replyText.trim() ? '#C7FF3F' : '#C7FF3F',
+                      color: '#0D0D0D',
                     }}
-                    whileHover={replyText.trim() ? { scale: 1.02 } : undefined}
-                    whileTap={replyText.trim() ? { scale: 0.98 } : undefined}
                     onClick={handleReplySubmit}
                     disabled={!replyText.trim()}
                   >
                     Reply
-                  </motion.button>
+                  </button>
                 </div>
               </div>
             </motion.div>
@@ -281,14 +231,14 @@ export function CommentItem({
 
       {/* Nested replies */}
       <AnimatePresence>
-        {hasReplies && !collapsed && depth < maxDepth && (
+        {hasReplies && !collapsed && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25 }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
             className="ml-4 overflow-hidden"
-            style={{ borderLeft: '1px solid rgba(124,77,255,0.15)' }}
+            style={{ borderLeft: '1px solid rgba(255,255,255,0.06)' }}
           >
             {comment.replies.map((reply) => (
               <CommentItem
@@ -297,7 +247,6 @@ export function CommentItem({
                 depth={depth + 1}
                 onVote={onVote}
                 onReply={onReply}
-                onReact={onReact}
               />
             ))}
           </motion.div>

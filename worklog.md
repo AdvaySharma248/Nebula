@@ -1,153 +1,121 @@
-# Nebula Threads - Work Log
+# Nebula — Work Log (Redesign)
 
 ---
-Task ID: 1
+Task ID: 1-2
 Agent: Main Coordinator
-Task: Set up project structure and install dependencies
+Task: Redesign global styles, layout, and design system
 
 Work Log:
-- Installed @tsparticles/react, @tsparticles/slim, tsparticles
-- Created directory structure: components/landing, layout, feed, community, profile, comments, widgets, effects, shared, ui-custom, stores, hooks
+- Rewrote globals.css with monochrome palette (#0D0D0D, #151515, #1A1A1A) + single accent (#C7FF3F)
+- Removed all purple/cyan/glassmorphism/neon-glow CSS classes
+- Added editorial CSS utilities: .surface, .surface-elevated, .accent-text, .accent-bg, .editorial-line, .hover-elevate, .transition-premium, .dot-pattern, .noise
+- Updated layout.tsx with Space Grotesk (display) + Inter (body) typography system
+- Updated Zustand store with simplified state (sidebarExpanded instead of sidebarOpen + sidebarCollapsed)
 
 Stage Summary:
-- Project structure ready for component development
-- All required packages installed (framer-motion, zustand, tsparticles already available)
-
----
-Task ID: 2
-Agent: Main Coordinator
-Task: Create global styles, theme, color system, and utility classes
-
-Work Log:
-- Rewrote globals.css with the Nebula color system (#060816 bg, #7C4DFF primary, #00E5FF secondary, #FF4DA6 highlight)
-- Added CSS utility classes: glass, glass-strong, glass-card, neon-glow, gradient-text, mesh-gradient, animate-float, animate-shimmer, etc.
-- Custom scrollbar styling, noise texture overlay, custom selection colors
-- Updated layout.tsx with dark theme and Nebula metadata
-- Created Zustand app store with full navigation and UI state management
-
-Stage Summary:
-- Complete dark futuristic color system with CSS custom properties
-- Glassmorphism, neon glow, gradient, and animation utility classes
-- App store with ViewType, sidebar state, search, notifications, post selection
+- Complete design system overhaul: dark monochrome + lime accent
+- Typography-first approach with Space Grotesk headings
+- All old gradient/glow/neon utilities removed
 
 ---
 Task ID: 3
-Agent: Effects Subagent
-Task: Build animated background effects
-
-Work Log:
-- Created ParticleField.tsx: Canvas-based particle animation with ~80 particles, connecting lines
-- Created MeshGradient.tsx: 5 gradient orbs with framer-motion animations
-- Created AuroraBackground.tsx: 6 large blurred gradient orbs drifting in circular patterns
-- Created GlowOrbs.tsx: 5 floating glowing orbs with bobbing animations
-- Created CursorGlow.tsx: Cursor-following glow with spring physics, hidden on touch devices
-
-Stage Summary:
-- All 5 background effects implemented with canvas/framer-motion
-- 60fps performance, proper cleanup, pointer-events-none
-- Custom canvas particle system (not using tsparticles library)
-
----
-Task ID: 4
 Agent: Landing Subagent
-Task: Build cinematic landing page
+Task: Redesign landing page with broken typography and asymmetric hero
 
 Work Log:
-- Created StatsCounter.tsx: Animated count-up with gradient text
-- Created FloatingPreview.tsx: Floating app mockup card with mini UI
-- Created HeroSection.tsx: Full hero with gradient text, CTA buttons, floating preview
-- Created FeatureSection.tsx: 6 feature cards with scroll animations
-- Created LandingPage.tsx: Full page composition with background effects and footer
+- Created LandingPage.tsx with left-aligned broken typography hero
+- "The OS for" (small, light, #888) → "Digital" (massive, #F5F5F5) → "Communities" (massive, #C7FF3F)
+- Live feed preview with 4 realistic tech posts
+- Asymmetric features grid (1 large + 2 small)
+- Editorial stats bar with thin dividers
+- Minimal footer
+- All animations use cinematic cubic-bezier(0.16, 1, 0.3, 1) easing
 
 Stage Summary:
-- Cinematic landing page with hero, features, and footer
-- Animated stats, floating preview cards, gradient CTAs
-- Staggered fade-up animations, scroll-triggered features
+- Landing page feels editorial, underground, premium
+- #C7FF3F used ONLY for: "Communities", "Enter" button, "Features" label, Live dot
+- Zero purple, zero cyan, zero gradients, zero glassmorphism
 
 ---
-Task ID: 5-6
+Task ID: 4-5
 Agent: Navigation Subagent
-Task: Build navbar and sidebar
+Task: Redesign navbar and sidebar
 
 Work Log:
-- Created Navbar.tsx: Sticky glassmorphism navbar with search, create, notifications, avatar
-- Created Sidebar.tsx: Floating sidebar with nav items, collapse toggle, user profile
-- Created MobileNav.tsx: Bottom floating nav with center create button
+- Navbar: h-12 thin bar, flat #0D0D0D bg, no blur/glass, minimal icons
+- Sidebar: floating dock at left-3, rounded-2xl, w-12→w-52 expand on hover
+- MobileNav: minimal bottom bar, surface bg, accent create button
 
 Stage Summary:
-- Full navigation system: top navbar, left sidebar (desktop), bottom nav (mobile)
-- Search with ⌘K shortcut, neon glow on focus
-- Sidebar with collapse, tooltips, sheet drawer for mobile
+- Ultra-minimal navigation inspired by Linear/Raycast
+- Dock-style sidebar with hover expand
+- No glow, no glassmorphism, no neon
 
 ---
-Task ID: 7
+Task ID: 6
 Agent: Feed Subagent
-Task: Build feed and post components
+Task: Redesign feed, post cards, and voting
 
 Work Log:
-- Created VoteButton.tsx: Circular neon voting with pulse/glow animations
-- Created PostCard.tsx: Glassmorphism post card with hover effects
-- Created CreatePostModal.tsx: Thread creation modal with glass styling
-- Created FeedContent.tsx: Main feed with tabs and 10 sample posts
+- PostCard: surface bg, rounded-lg, realistic shadow on hover, minimal footer actions
+- VoteButton: clean chevrons only, no circles/neon, accent-text on active
+- FeedContent: sticky top-12, "Feed" header + tabs, 10 authentic-sounding posts
+- CreatePostModal: minimal modal, #151515 bg, accent-bg submit button
 
 Stage Summary:
-- Modern voting UI with animated pulse and glow bursts
-- 10 realistic sample posts across 8 communities
-- Feed tabs (For You, Trending, Latest) with animated underline
+- Premium editorial card system
+- Authentic HN/Reddit-style post content
+- Minimal voting with just chevrons and accent color
 
 ---
-Task ID: 8-10-11
+Task ID: 7-8
 Agent: Widgets/Profile/Community Subagent
-Task: Build widgets, profile, and community pages
+Task: Redesign widgets, profile, and community pages
 
 Work Log:
-- Created TrendingCommunities, LiveDiscussions, AIRecommendations, PopularTags, ActivityHeatmap widgets
-- Created WidgetPanel.tsx: Container for all widgets
-- Created ProfilePage.tsx: Creator dashboard with bento grid, stats, achievements
-- Created CommunityPage.tsx: Full community page with banner, tabs, posts, about, members, events
+- TrendingCommunities: pure text ranking, no avatars/sparklines
+- ActiveDiscussions: pulsing accent dot + topic text
+- PopularTags: monochrome pills, all #1A1A1A bg
+- WidgetPanel: 3 widgets only (removed ActivityHeatmap, AIRecommendations)
+- ProfilePage: no gradient banner, editorial bento grid
+- CommunityPage: no gradient banner, clean tabs, inline posts
 
 Stage Summary:
-- 5 widget components with glassmorphism styling
-- Profile page with animated banner, bento grid, activity graph
-- Community page with 4 tabs, animated gradient banner
+- All widgets are text-first, monochrome
+- Profile: 80px avatar, inline stats, bento grid with surface cards
+- Community: initial letter square, editorial tabs
 
 ---
-Task ID: 9-12
-Agent: Comments/Shared Subagent
-Task: Build comments and shared components
+Task ID: 8-9
+Agent: Comments/Effects Subagent
+Task: Redesign comments and background effects
 
 Work Log:
-- Created CommentSection.tsx: Nested comment system with threading
-- Created CommentItem.tsx: Individual comment with reactions, inline replies
-- Created MagneticButton.tsx: Cursor-following magnetic hover
-- Created GlowCard.tsx: Glassmorphism card with glow effects
-- Created AnimatedCounter.tsx: Animated number counter
-- Created GradientButton.tsx: Gradient CTA with shimmer
-- Created ProfileHoverCard.tsx: Hover card for user avatars
+- CommentSection: minimal input, accent-bg submit, 5 realistic comments
+- CommentItem: text-focused, chevron votes, inline reply, thin indentation borders
+- CursorGlow: barely visible rgba(199,255,63,0.03) cursor hint
+- AmbientBackground: 2 barely-visible gradient orbs replacing all old effects
+- Deleted: ParticleField, AuroraBackground, GlowOrbs, MeshGradient
 
 Stage Summary:
-- Full comment system with 5 sample comments, nested replies
-- 5 shared components for reusable UI patterns
-- All with framer-motion animations
+- Comments are minimal and editorial, no emojis/reactions
+- Background effects are subtle atmosphere, not flashy particles
+- Old effects completely removed
 
 ---
-Task ID: 14-15
+Task ID: 10-11
 Agent: Main Coordinator
-Task: Wire up main page.tsx and final polish
+Task: Wire up page.tsx and final polish
 
 Work Log:
-- Wrote complete page.tsx with all views connected via Zustand store
-- Landing view: Full cinematic experience with background effects
-- App views: Navbar + Sidebar + content + WidgetPanel layout
-- Post detail view with CommentSection integration
-- Fixed FeedContent sticky header (top-16 for navbar offset)
-- Responsive layout with mobile detection
-- AnimatePresence transitions between all views
-- Footer sticky at bottom of content
-- Lint passes cleanly, page loads with 200 status
+- Rewrote page.tsx with new design system and smooth page transitions
+- All views use cinematic cubic-bezier transitions (0.35s)
+- Cleaned up old component files (HeroSection, FeatureSection, FloatingPreview, StatsCounter, ComponentsShowcase, etc.)
+- Final lint: clean
+- Dev server: 200 OK
 
 Stage Summary:
-- Complete single-page app with client-side navigation
-- All 15+ components properly wired together
-- Dark futuristic aesthetic throughout
-- Lint: ✅ Clean | Dev Server: ✅ 200 OK
+- Complete redesign from generic AI SaaS to editorial minimalism
+- Monochrome + #C7FF3F accent throughout
+- Typography-driven, asymmetric, premium feel
+- Lint: ✅ | Server: ✅
