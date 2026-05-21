@@ -1,5 +1,14 @@
 import { z } from "zod";
 
+// Load .env file programmatically if it exists (using Node 20.6+ native feature)
+if (typeof process.loadEnvFile === "function") {
+  try {
+    process.loadEnvFile();
+  } catch (error) {
+    // Ignore error if .env file is missing (env vars can be injected directly)
+  }
+}
+
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   BACKEND_PORT: z.coerce.number().int().positive().default(4000),

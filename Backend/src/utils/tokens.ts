@@ -31,7 +31,7 @@ export function refreshCookieOptions() {
   return {
     httpOnly: true,
     secure: isProduction,
-    sameSite: "strict" as const,
+    sameSite: (isProduction ? "none" : "lax") as "none" | "lax",
     path: "/api/auth",
     domain: env.COOKIE_DOMAIN || undefined,
     maxAge: env.JWT_REFRESH_TTL_DAYS * 24 * 60 * 60 * 1000,
@@ -42,7 +42,7 @@ export function accessCookieOptions() {
   return {
     httpOnly: true,
     secure: isProduction,
-    sameSite: "strict" as const,
+    sameSite: (isProduction ? "none" : "lax") as "none" | "lax",
     path: "/",
     domain: env.COOKIE_DOMAIN || undefined,
   };
