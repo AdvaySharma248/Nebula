@@ -29,7 +29,7 @@ log_step_end() {
 }
 
 start_mini_services() {
-	local mini_services_dir="$PROJECT_DIR/mini-services"
+	local mini_services_dir="$PROJECT_DIR/Backend/mini-services"
 	local started_count=0
 
 	log_step_start "Starting mini-services"

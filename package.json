@@ -3,14 +3,14 @@
   "version": "0.2.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3000 2>&1 | tee dev.log",
-    "build": "next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/",
-    "start": "NODE_ENV=production bun .next/standalone/server.js 2>&1 | tee server.log",
-    "lint": "eslint .",
-    "db:push": "prisma db push",
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:reset": "prisma migrate reset"
+    "dev": "next dev Frontend -p 3000 2>&1 | tee dev.log",
+    "build": "next build Frontend && cp -r Frontend/.next/static Frontend/.next/standalone/.next/ && cp -r Frontend/public Frontend/.next/standalone/",
+    "start": "NODE_ENV=production bun Frontend/.next/standalone/server.js 2>&1 | tee server.log",
+    "lint": "cd Frontend && eslint .",
+    "db:push": "prisma db push --schema Backend/prisma/schema.prisma",
+    "db:generate": "prisma generate --schema Backend/prisma/schema.prisma",
+    "db:migrate": "prisma migrate dev --schema Backend/prisma/schema.prisma",
+    "db:reset": "prisma migrate reset --schema Backend/prisma/schema.prisma"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
