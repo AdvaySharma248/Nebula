@@ -29,3 +29,5 @@ out/
 *.sw?
 .DS_Store
 Thumbs.db
+*.rar
+*.zip
