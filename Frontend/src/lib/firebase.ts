@@ -1,10 +1,11 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import {
   getAuth,
+  setPersistence,
+  browserLocalPersistence,
   GoogleAuthProvider,
   GithubAuthProvider,
 } from 'firebase/auth';
-import { getAnalytics, isSupported } from 'firebase/analytics';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -20,14 +21,39 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 
+// Explicitly set browserLocalPersistence
+if (typeof window !== 'undefined') {
+  setPersistence(auth, browserLocalPersistence).catch((err) => {
+    console.error("Failed to configure Firebase Auth persistence strategy:", err);
+  });
+}
+
 // Initialize Analytics safely in browser context only
 let analytics: any = null;
 if (typeof window !== 'undefined') {
-  isSupported().then((supported) => {
-    if (supported) {
-      analytics = getAnalytics(app);
-    }
-  });
+  const loadAnalytics = () => {
+    import('firebase/analytics')
+      .then(({ getAnalytics, isSupported }) =>
+        isSupported().then((supported) => {
+          if (supported) {
+            analytics = getAnalytics(app);
+          }
+        }),
+      )
+      .catch((error) => {
+        console.warn('Firebase analytics could not be initialized:', error);
+      });
+  };
+
+  const idleWindow = window as Window & {
+    requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
+  };
+
+  if (idleWindow.requestIdleCallback) {
+    idleWindow.requestIdleCallback(loadAnalytics, { timeout: 3000 });
+  } else {
+    globalThis.setTimeout(loadAnalytics, 1500);
+  }
 }
 
 // Configure Providers
@@ -37,4 +63,3 @@ googleProvider.setCustomParameters({ prompt: 'select_account' });
 const githubProvider = new GithubAuthProvider();
 
 export { app, auth, googleProvider, githubProvider, analytics };
-

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronUp, ChevronDown } from 'lucide-react'
 
@@ -21,7 +21,7 @@ interface CommentItemProps {
   onReply?: (id: string, content: string) => void
 }
 
-export function CommentItem({
+export const CommentItem = memo(function CommentItem({
   comment,
   depth = 0,
   onVote,
@@ -254,4 +254,4 @@ export function CommentItem({
       </AnimatePresence>
     </div>
   )
-}
+})

@@ -34,12 +34,7 @@ export async function optionalAuth(req: Request, _res: Response, next: NextFunct
     if (!token) return next();
 
     const payload = verifyAccessToken(token);
-    const user = await db.user.findFirst({
-      where: { id: payload.sub, deletedAt: null },
-      select: { id: true, email: true, username: true, role: true },
-    });
-
-    if (user) req.user = user;
+    req.user = { id: payload.sub, email: "", username: "", role: payload.role };
     next();
   } catch {
     next();

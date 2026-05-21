@@ -1,4 +1,7 @@
-const DEFAULT_BACKEND_PORT = '4000'
+import { apiRequest, backendBaseUrl, type BackendUser } from './api'
+
+const BACKEND_USER_CACHE_KEY = 'nebula_backend_user_cache'
+const BACKEND_USER_CACHE_TTL_MS = 5 * 60_000
 
 export type BackendSyncProfile = {
   uid: string
@@ -10,19 +13,38 @@ export type BackendSyncProfile = {
   provider: string
 }
 
-function backendBaseUrl() {
-  const configuredUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.trim()
-  if (configuredUrl) return configuredUrl.replace(/\/+$/, '')
+type CachedBackendUser = {
+  uid: string
+  user: BackendUser
+  timestamp: number
+}
 
-  if (typeof window !== 'undefined') {
-    const { protocol, hostname } = window.location
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      const port = process.env.NEXT_PUBLIC_BACKEND_PORT || DEFAULT_BACKEND_PORT
-      return `${protocol}//${hostname}:${port}`
+export function loadCachedBackendUser(uid?: string | null) {
+  if (typeof window === 'undefined' || !uid) return null
+
+  try {
+    const raw = localStorage.getItem(BACKEND_USER_CACHE_KEY)
+    if (!raw) return null
+
+    const cached = JSON.parse(raw) as CachedBackendUser
+    if (cached.uid !== uid || Date.now() - cached.timestamp > BACKEND_USER_CACHE_TTL_MS) {
+      return null
     }
-  }
 
-  return `http://localhost:${DEFAULT_BACKEND_PORT}`
+    return cached.user
+  } catch {
+    return null
+  }
+}
+
+export function cacheBackendUser(uid: string, user: BackendUser) {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(BACKEND_USER_CACHE_KEY, JSON.stringify({ uid, user, timestamp: Date.now() }))
+}
+
+export function clearCachedBackendUser() {
+  if (typeof window === 'undefined') return
+  localStorage.removeItem(BACKEND_USER_CACHE_KEY)
 }
 
 export async function syncUserWithBackend(profile: BackendSyncProfile) {
@@ -46,8 +68,18 @@ export async function syncUserWithBackend(profile: BackendSyncProfile) {
     if (!response.ok) {
       const err = await response.json()
       console.warn('Backend sync warning:', err)
+      return null
     }
+    const payload = await response.json()
+    const user = payload.data?.user as BackendUser
+    if (user) cacheBackendUser(profile.uid, user)
+    return user
   } catch (error) {
     console.error('Backend sync failed. Standalone fallback active:', error)
+    return null
   }
+}
+
+export async function getBackendMe() {
+  return apiRequest<BackendUser>('/api/auth/me').then((response) => response.data)
 }

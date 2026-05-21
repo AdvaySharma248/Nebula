@@ -29,11 +29,39 @@ export const useAppStore = create<AppState>((set) => ({
   selectedPost: null,
   isMobile: false,
 
-  setView: (view) => set({ currentView: view }),
-  setSidebarExpanded: (expanded) => set({ sidebarExpanded: expanded }),
-  setSelectedCommunity: (community) => set({ selectedCommunity: community, currentView: 'community' }),
-  setSearchOpen: (open) => set({ searchOpen: open }),
-  setCreatePostOpen: (open) => set({ createPostOpen: open }),
-  setSelectedPost: (postId) => set({ selectedPost: postId }),
-  setIsMobile: (mobile) => set({ isMobile: mobile }),
+  setView: (view) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('nebula_current_view', view)
+      localStorage.removeItem('nebula_selected_post')
+    }
+    set((state) => ({
+      currentView: view,
+      selectedPost: null,
+    }))
+  },
+  setSidebarExpanded: (expanded) => set((state) => (state.sidebarExpanded === expanded ? state : { sidebarExpanded: expanded })),
+  setSelectedCommunity: (community) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('nebula_current_view', 'community')
+      localStorage.removeItem('nebula_selected_post')
+    }
+    set((state) =>
+      state.selectedCommunity === community && state.currentView === 'community' && state.selectedPost === null
+        ? state
+        : { selectedCommunity: community, currentView: 'community', selectedPost: null },
+    )
+  },
+  setSearchOpen: (open) => set((state) => (state.searchOpen === open ? state : { searchOpen: open })),
+  setCreatePostOpen: (open) => set((state) => (state.createPostOpen === open ? state : { createPostOpen: open })),
+  setSelectedPost: (postId) => {
+    if (typeof window !== 'undefined') {
+      if (postId) {
+        localStorage.setItem('nebula_selected_post', postId)
+      } else {
+        localStorage.removeItem('nebula_selected_post')
+      }
+    }
+    set((state) => (state.selectedPost === postId ? state : { selectedPost: postId }))
+  },
+  setIsMobile: (mobile) => set((state) => (state.isMobile === mobile ? state : { isMobile: mobile })),
 }))

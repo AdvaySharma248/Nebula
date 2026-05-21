@@ -1,67 +1,46 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-
-interface Discussion {
-  id: string
-  topic: string
-  participants: number
-}
-
-const discussions: Discussion[] = [
-  { id: '1', topic: 'Is quantum computing ready for production?', participants: 47 },
-  { id: '2', topic: 'Neural interface breakthrough in Japan', participants: 32 },
-  { id: '3', topic: 'Holographic displays: 2026 roadmap', participants: 28 },
-  { id: '4', topic: 'Decentralized AI training methods', participants: 19 },
-]
+import { apiRequest, type BackendPost } from '@/lib/api'
+import { useAppStore } from '@/stores/app-store'
 
 export default function ActiveDiscussions() {
+  const setSelectedPost = useAppStore((state) => state.setSelectedPost)
+  const [posts, setPosts] = useState<BackendPost[]>([])
+
+  useEffect(() => {
+    apiRequest<BackendPost[]>('/api/posts?sort=trending&limit=4')
+      .then((response) => setPosts(response.data))
+      .catch(() => setPosts([]))
+  }, [])
+
   return (
     <div className="surface rounded-lg p-4">
-      <h3
-        className="text-xs font-semibold tracking-wider uppercase text-tertiary mb-3"
-        style={{ fontFamily: 'var(--font-display)' }}
-      >
-        Active now
-      </h3>
+      <h3 className="text-xs font-semibold tracking-wider uppercase text-tertiary mb-3 font-display">Active now</h3>
 
-      <div>
-        {discussions.map((discussion, index) => (
-          <motion.div
-            key={discussion.id}
-            className="flex items-center gap-3 py-2.5 px-1 rounded transition-colors duration-200 hover:bg-white/[0.02] cursor-pointer group"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: index * 0.04, duration: 0.3 }}
-          >
-            {/* Pulsing dot */}
-            <span className="relative flex-shrink-0 flex items-center justify-center w-1.5 h-1.5">
-              <span
-                className="absolute inline-flex h-full w-full rounded-full opacity-75"
-                style={{ backgroundColor: '#C7FF3F' }}
-              >
-                <motion.span
-                  className="absolute inline-flex h-full w-full rounded-full"
-                  style={{ backgroundColor: '#C7FF3F' }}
-                  animate={{ scale: [1, 2.5, 1], opacity: [0.6, 0, 0.6] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                />
+      {posts.length === 0 ? (
+        <p className="text-xs text-tertiary">No active discussions yet.</p>
+      ) : (
+        <div>
+          {posts.map((post, index) => (
+            <motion.button
+              key={post.id}
+              onClick={() => setSelectedPost(post.id)}
+              className="w-full flex items-center gap-3 py-2.5 px-1 rounded transition-colors duration-200 hover:bg-white/[0.02] text-left group"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: index * 0.04, duration: 0.3 }}
+            >
+              <span className="relative flex-shrink-0 flex items-center justify-center w-1.5 h-1.5">
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ backgroundColor: 'var(--primary)' }} />
               </span>
-              <span
-                className="relative inline-flex rounded-full h-1.5 w-1.5"
-                style={{ backgroundColor: '#C7FF3F' }}
-              />
-            </span>
-
-            <span className="text-sm text-[#F5F5F5] truncate flex-1 group-hover:text-[#C7FF3F] transition-colors">
-              {discussion.topic}
-            </span>
-            <span className="text-xs text-tertiary flex-shrink-0 tabular-nums">
-              {discussion.participants}
-            </span>
-          </motion.div>
-        ))}
-      </div>
+              <span className="text-sm text-[#F5F5F5] truncate flex-1 group-hover:text-primary transition-colors">{post.title}</span>
+              <span className="text-xs text-tertiary flex-shrink-0 tabular-nums">{post.commentCount}</span>
+            </motion.button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

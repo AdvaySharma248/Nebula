@@ -9,12 +9,12 @@ export const postController = {
   }),
 
   list: asyncHandler(async (req, res) => {
-    const result = await postService.list(req.query);
+    const result = await postService.list(req.query, req.user?.id);
     return sendSuccess(res, 200, "Posts fetched", result.items, result.meta);
   }),
 
   trending: asyncHandler(async (req, res) => {
-    const result = await postService.list({ ...req.query, sort: "trending" });
+    const result = await postService.list({ ...req.query, sort: "trending" }, req.user?.id);
     return sendSuccess(res, 200, "Trending posts fetched", result.items, result.meta);
   }),
 

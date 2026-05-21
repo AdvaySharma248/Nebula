@@ -1,13 +1,38 @@
 import { db } from "../lib/db";
 import { requireCommunityRole } from "./community.service";
 import { badRequest, forbidden, notFound } from "../utils/errors";
-import { getPagination, paginationMeta } from "../utils/pagination";
+import { getPagination } from "../utils/pagination";
 import { sanitizeText } from "../utils/sanitize";
 
 const postInclude = {
   author: { select: { id: true, username: true, displayName: true, avatarUrl: true } },
   community: { select: { id: true, name: true, slug: true, avatarUrl: true } },
 } as const;
+
+const postListInclude = (viewerId?: string) => ({
+  ...postInclude,
+  _count: { select: { comments: true, savedBy: true } },
+  votes: viewerId ? { where: { userId: viewerId }, select: { value: true } } : false,
+  savedBy: viewerId ? { where: { userId: viewerId }, select: { id: true } } : false,
+});
+
+const PUBLIC_LIST_CACHE_TTL_MS = 10_000;
+const publicListCache = new Map<string, { expiresAt: number; value: any }>();
+
+function clearPublicListCache() {
+  publicListCache.clear();
+}
+
+function publicListCacheKey(query: { page?: number; limit?: number; sort?: string; community?: string; author?: string; tag?: string }) {
+  return JSON.stringify({
+    page: query.page ?? 1,
+    limit: query.limit ?? 20,
+    sort: query.sort ?? "new",
+    community: query.community ?? "",
+    author: query.author ?? "",
+    tag: query.tag ?? "",
+  });
+}
 
 function orderFor(sort?: string) {
   if (sort === "top") return [{ score: "desc" as const }, { createdAt: "desc" as const }];
@@ -30,7 +55,7 @@ export const postService = {
       if (!community) throw notFound("Community");
     }
 
-    return db.$transaction(async (tx) => {
+    const post = await db.$transaction(async (tx) => {
       const post = await tx.post.create({
         data: {
           title: sanitizeText(input.title),
@@ -51,9 +76,21 @@ export const postService = {
 
       return post;
     });
+
+    clearPublicListCache();
+    return post;
   },
 
-  async list(query: { page?: number; limit?: number; sort?: string; community?: string; author?: string; tag?: string }) {
+  async list(query: { page?: number; limit?: number; sort?: string; community?: string; author?: string; tag?: string }, viewerId?: string) {
+    const cacheKey = !viewerId ? publicListCacheKey(query) : null;
+    if (cacheKey) {
+      const cached = publicListCache.get(cacheKey);
+      if (cached && cached.expiresAt > Date.now()) {
+        return cached.value;
+      }
+      publicListCache.delete(cacheKey);
+    }
+
     const pagination = getPagination(query);
     const where = {
       deletedAt: null,
@@ -63,18 +100,30 @@ export const postService = {
       ...(query.tag ? { tags: { has: query.tag } } : {}),
     };
 
-    const [items, total] = await Promise.all([
-      db.post.findMany({
-        where,
-        skip: pagination.skip,
-        take: pagination.take,
-        orderBy: orderFor(query.sort),
-        include: postInclude,
-      }),
-      db.post.count({ where }),
-    ]);
+    const items = await db.post.findMany({
+      where,
+      skip: pagination.skip,
+      take: pagination.take + 1,
+      orderBy: orderFor(query.sort),
+      include: postListInclude(viewerId),
+    });
+    const hasMore = items.length > pagination.take;
 
-    return { items, meta: paginationMeta(pagination.page, pagination.limit, total) };
+    const result = {
+      items: hasMore ? items.slice(0, pagination.take) : items,
+      meta: {
+        page: pagination.page,
+        limit: pagination.limit,
+        hasMore,
+        nextPage: hasMore ? pagination.page + 1 : null,
+      },
+    };
+
+    if (cacheKey) {
+      publicListCache.set(cacheKey, { value: result, expiresAt: Date.now() + PUBLIC_LIST_CACHE_TTL_MS });
+    }
+
+    return result;
   },
 
   async get(id: string, viewerId?: string) {
@@ -84,10 +133,13 @@ export const postService = {
         ...postInclude,
         _count: { select: { comments: true, savedBy: true } },
         votes: viewerId ? { where: { userId: viewerId }, select: { value: true } } : false,
+        savedBy: viewerId ? { where: { userId: viewerId }, select: { id: true } } : false,
       },
     });
     if (!post) throw notFound("Post");
-    await db.post.update({ where: { id }, data: { viewCount: { increment: 1 } } });
+    void db.post.update({ where: { id }, data: { viewCount: { increment: 1 } } }).catch((error) => {
+      console.error("Failed to increment post view count", error);
+    });
     return post;
   },
 
@@ -103,7 +155,7 @@ export const postService = {
       throw forbidden();
     }
 
-    return db.post.update({
+    const updated = await db.post.update({
       where: { id: postId },
       data: {
         title: typeof input.title === "string" ? sanitizeText(input.title) : undefined,
@@ -115,6 +167,8 @@ export const postService = {
       },
       include: postInclude,
     });
+    clearPublicListCache();
+    return updated;
   },
 
   async remove(userId: string, postId: string) {
@@ -135,6 +189,7 @@ export const postService = {
         await tx.community.update({ where: { id: post.communityId }, data: { postCount: { decrement: 1 } } });
       }
     });
+    clearPublicListCache();
   },
 
   async save(userId: string, postId: string) {

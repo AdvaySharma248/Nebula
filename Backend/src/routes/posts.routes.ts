@@ -7,9 +7,9 @@ import { createPostSchema, postFeedQuerySchema, updatePostSchema } from "../vali
 
 const router = Router();
 
-router.get("/", validate({ query: postFeedQuerySchema }), postController.list);
+router.get("/", optionalAuth, validate({ query: postFeedQuerySchema }), postController.list);
 router.post("/", requireAuth, validate({ body: createPostSchema }), postController.create);
-router.get("/trending", postController.trending);
+router.get("/trending", optionalAuth, postController.trending);
 router.get("/:id", optionalAuth, validate({ params: idParamSchema }), postController.get);
 router.patch("/:id", requireAuth, validate({ params: idParamSchema, body: updatePostSchema }), postController.update);
 router.delete("/:id", requireAuth, validate({ params: idParamSchema }), postController.remove);

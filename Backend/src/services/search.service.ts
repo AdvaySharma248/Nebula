@@ -61,7 +61,7 @@ export const searchService = {
         db.user.findMany({
           where: {
             deletedAt: null,
-            OR: [{ username: { contains: text, mode } }, { displayName: { contains: text, mode } }],
+            OR: [{ id: text }, { username: { contains: text, mode } }, { displayName: { contains: text, mode } }],
           },
           take: pagination.take,
           skip: pagination.skip,
@@ -71,7 +71,7 @@ export const searchService = {
         db.user.count({
           where: {
             deletedAt: null,
-            OR: [{ username: { contains: text, mode } }, { displayName: { contains: text, mode } }],
+            OR: [{ id: text }, { username: { contains: text, mode } }, { displayName: { contains: text, mode } }],
           },
         }),
       ]);

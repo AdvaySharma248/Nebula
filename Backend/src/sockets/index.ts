@@ -5,6 +5,12 @@ import { verifyAccessToken } from "../utils/tokens";
 
 let io: Server | undefined;
 
+function parseCookie(cookieStr: string | undefined, key: string): string | undefined {
+  if (!cookieStr) return undefined;
+  const match = cookieStr.match(new RegExp(`(^|;)\\s*${key}\\s*=\\s*([^;]+)`));
+  return match ? decodeURIComponent(match[2]) : undefined;
+}
+
 export function initSockets(server: HttpServer) {
   io = new Server(server, {
     cors: {
@@ -16,7 +22,10 @@ export function initSockets(server: HttpServer) {
   });
 
   io.use((socket, next) => {
-    const token = socket.handshake.auth?.token;
+    let token = socket.handshake.auth?.token;
+    if (!token && socket.handshake.headers.cookie) {
+      token = parseCookie(socket.handshake.headers.cookie, "accessToken");
+    }
     if (!token) return next();
 
     try {
@@ -32,6 +41,18 @@ export function initSockets(server: HttpServer) {
     if (socket.data.userId) {
       socket.join(`user:${socket.data.userId}`);
     }
+
+    socket.on("join:post", (postId: string) => {
+      if (postId) {
+        socket.join(`post:${postId}`);
+      }
+    });
+
+    socket.on("leave:post", (postId: string) => {
+      if (postId) {
+        socket.leave(`post:${postId}`);
+      }
+    });
   });
 
   return io;

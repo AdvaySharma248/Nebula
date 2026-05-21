@@ -45,8 +45,12 @@ const TRANSITION = {
 
 /* ─── Desktop sidebar ─── */
 function DesktopSidebar() {
-  const { currentView, setView } = useAppStore()
-  const { user, isGuest, setAuthModalOpen, logout } = useAuthStore()
+  const currentView = useAppStore((state) => state.currentView)
+  const setView = useAppStore((state) => state.setView)
+  const user = useAuthStore((state) => state.user)
+  const isGuest = useAuthStore((state) => state.isGuest)
+  const setAuthModalOpen = useAuthStore((state) => state.setAuthModalOpen)
+  const logout = useAuthStore((state) => state.logout)
   const [expanded, setExpanded] = useState(false)
   const collapseTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -91,15 +95,15 @@ function DesktopSidebar() {
                   ${expanded ? 'gap-3 px-3 py-2' : 'justify-center px-2 py-2.5'}
                 `}
                 style={{
-                  background: isActive ? 'rgba(199,255,63,0.08)' : 'transparent',
-                  borderLeft: isActive && expanded ? '2px solid #C7FF3F' : '2px solid transparent',
+                  background: isActive ? 'var(--sidebar-accent)' : 'transparent',
+                  borderLeft: isActive && expanded ? '2px solid var(--primary)' : '2px solid transparent',
                 }}
                 aria-label={item.label}
                 aria-current={isActive ? 'page' : undefined}
               >
                 <item.icon
                   className="w-[18px] h-[18px] shrink-0"
-                  style={{ color: isActive ? '#C7FF3F' : '#555555' }}
+                  style={{ color: isActive ? 'var(--primary)' : '#555555' }}
                 />
 
                 {/* Label — visible when expanded */}
@@ -111,7 +115,7 @@ function DesktopSidebar() {
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.15 }}
                       className="text-xs font-medium whitespace-nowrap overflow-hidden"
-                      style={{ color: isActive ? '#C7FF3F' : '#888888' }}
+                      style={{ color: isActive ? 'var(--primary)' : '#888888' }}
                     >
                       {item.label}
                     </motion.span>
@@ -122,7 +126,7 @@ function DesktopSidebar() {
                 {isActive && !expanded && (
                   <span
                     className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-4 rounded-full"
-                    style={{ background: '#C7FF3F' }}
+                    style={{ background: 'var(--primary)' }}
                   />
                 )}
               </button>
@@ -146,7 +150,7 @@ function DesktopSidebar() {
                 className="text-[9px] font-semibold"
                 style={{
                   background: '#1A1A1A',
-                  color: user ? '#C7FF3F' : isGuest ? '#888888' : '#555555',
+                  color: user ? 'var(--primary)' : isGuest ? '#888888' : '#555555',
                   border: '1px solid rgba(255,255,255,0.06)',
                 }}
               >
@@ -192,7 +196,7 @@ function DesktopSidebar() {
                         e.stopPropagation()
                         setAuthModalOpen(true, 'login')
                       }}
-                      className="px-1.5 py-0.5 rounded text-[9px] bg-[#C7FF3F] text-[#0D0D0D] font-medium cursor-pointer hover:opacity-90 transition-opacity ml-auto flex-shrink-0"
+                      className="px-1.5 py-0.5 rounded text-[9px] bg-[var(--primary)] text-[var(--primary-foreground)] font-medium cursor-pointer hover:opacity-90 transition-opacity ml-auto flex-shrink-0"
                     >
                       Sign In
                     </button>
@@ -209,8 +213,14 @@ function DesktopSidebar() {
 
 /* ─── Mobile sidebar (Sheet) ─── */
 function MobileSidebar() {
-  const { currentView, setView, sidebarExpanded, setSidebarExpanded } = useAppStore()
-  const { user, isGuest, setAuthModalOpen, logout } = useAuthStore()
+  const currentView = useAppStore((state) => state.currentView)
+  const setView = useAppStore((state) => state.setView)
+  const sidebarExpanded = useAppStore((state) => state.sidebarExpanded)
+  const setSidebarExpanded = useAppStore((state) => state.setSidebarExpanded)
+  const user = useAuthStore((state) => state.user)
+  const isGuest = useAuthStore((state) => state.isGuest)
+  const setAuthModalOpen = useAuthStore((state) => state.setAuthModalOpen)
+  const logout = useAuthStore((state) => state.logout)
 
   return (
     <Sheet open={sidebarExpanded} onOpenChange={setSidebarExpanded}>
@@ -237,18 +247,18 @@ function MobileSidebar() {
                   }}
                   className="relative flex items-center w-full gap-3 rounded-lg px-3 py-2.5 transition-colors duration-150"
                   style={{
-                    background: isActive ? 'rgba(199,255,63,0.08)' : 'transparent',
-                    borderLeft: isActive ? '2px solid #C7FF3F' : '2px solid transparent',
+                    background: isActive ? 'var(--sidebar-accent)' : 'transparent',
+                    borderLeft: isActive ? '2px solid var(--primary)' : '2px solid transparent',
                   }}
                   aria-current={isActive ? 'page' : undefined}
                 >
                   <item.icon
                     className="w-[18px] h-[18px] shrink-0"
-                    style={{ color: isActive ? '#C7FF3F' : '#555555' }}
+                    style={{ color: isActive ? 'var(--primary)' : '#555555' }}
                   />
                   <span
                     className="text-xs font-medium"
-                    style={{ color: isActive ? '#C7FF3F' : '#888888' }}
+                    style={{ color: isActive ? 'var(--primary)' : '#888888' }}
                   >
                     {item.label}
                   </span>
@@ -269,7 +279,7 @@ function MobileSidebar() {
                   className="text-[9px] font-semibold"
                   style={{
                     background: '#1A1A1A',
-                    color: user ? '#C7FF3F' : isGuest ? '#888888' : '#555555',
+                    color: user ? 'var(--primary)' : isGuest ? '#888888' : '#555555',
                     border: '1px solid rgba(255,255,255,0.06)',
                   }}
                 >
@@ -306,7 +316,7 @@ function MobileSidebar() {
                       setAuthModalOpen(true, 'login')
                       setSidebarExpanded(false)
                     }}
-                    className="px-2 py-0.5 rounded text-[10px] bg-[#C7FF3F] text-[#0D0D0D] font-medium cursor-pointer hover:opacity-90 transition-opacity ml-auto flex-shrink-0"
+                    className="px-2 py-0.5 rounded text-[10px] bg-[var(--primary)] text-[var(--primary-foreground)] font-medium cursor-pointer hover:opacity-90 transition-opacity ml-auto flex-shrink-0"
                   >
                     Sign In
                   </button>
@@ -322,7 +332,7 @@ function MobileSidebar() {
 
 /* ─── Main export ─── */
 export default function Sidebar() {
-  const { isMobile } = useAppStore()
+  const isMobile = useAppStore((state) => state.isMobile)
 
   if (isMobile) {
     return <MobileSidebar />

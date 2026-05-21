@@ -1,8 +1,9 @@
 import { db } from "../lib/db";
+import { emitToPost } from "../sockets";
 import { notificationService } from "./notification.service";
 import { forbidden, notFound } from "../utils/errors";
 import { extractMentions } from "../utils/mentions";
-import { getPagination, paginationMeta } from "../utils/pagination";
+import { paginationMeta } from "../utils/pagination";
 import { sanitizeText } from "../utils/sanitize";
 
 type ThreadComment = {
@@ -89,28 +90,23 @@ export const commentService = {
       );
     }
 
+    emitToPost(input.postId, "comment:create", comment);
     return comment;
   },
 
   async listByPost(postId: string, query: unknown) {
-    const pagination = getPagination(query);
     const where = { postId, deletedAt: null };
-    const [items, total] = await Promise.all([
-      db.comment.findMany({
-        where,
-        skip: pagination.skip,
-        take: pagination.take,
-        orderBy: { createdAt: "asc" },
-        include: {
-          author: { select: { id: true, username: true, displayName: true, avatarUrl: true } },
-        },
-      }),
-      db.comment.count({ where }),
-    ]);
+    const items = await db.comment.findMany({
+      where,
+      orderBy: { createdAt: "asc" },
+      include: {
+        author: { select: { id: true, username: true, displayName: true, avatarUrl: true } },
+      },
+    });
 
     return {
       items: buildThread(items as ThreadComment[]),
-      meta: paginationMeta(pagination.page, pagination.limit, total),
+      meta: paginationMeta(1, items.length || 1, items.length),
     };
   },
 
@@ -119,11 +115,13 @@ export const commentService = {
     if (!comment) throw notFound("Comment");
     if (comment.authorId !== userId) throw forbidden();
 
-    return db.comment.update({
+    const updated = await db.comment.update({
       where: { id: commentId },
       data: { body: sanitizeText(body) },
       include: { author: { select: { id: true, username: true, displayName: true, avatarUrl: true } } },
     });
+    emitToPost(updated.postId, "comment:update", updated);
+    return updated;
   },
 
   async remove(userId: string, commentId: string) {
@@ -135,5 +133,6 @@ export const commentService = {
       db.comment.update({ where: { id: commentId }, data: { deletedAt: new Date() } }),
       db.post.update({ where: { id: comment.postId }, data: { commentCount: { decrement: 1 } } }),
     ]);
+    emitToPost(comment.postId, "comment:delete", { commentId });
   },
 };

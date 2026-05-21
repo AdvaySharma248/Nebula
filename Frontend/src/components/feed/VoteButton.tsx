@@ -1,30 +1,38 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { motion } from 'framer-motion'
 import { ChevronUp, ChevronDown } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth-store'
 import { toast } from 'sonner'
+import { apiRequest } from '@/lib/api'
 
 interface VoteButtonProps {
+  postId: string
   initialVotes: number
   initialUserVote: 'up' | 'down' | null
   onVote?: (vote: 'up' | 'down' | null) => void
   size?: 'sm' | 'default'
+  disabled?: boolean
 }
 
-export function VoteButton({
+export const VoteButton = memo(function VoteButton({
+  postId,
   initialVotes,
   initialUserVote,
   onVote,
   size = 'default',
+  disabled = false,
 }: VoteButtonProps) {
   const [userVote, setUserVote] = useState<'up' | 'down' | null>(initialUserVote)
   const [votes, setVotes] = useState(initialVotes)
   const [animatingDirection, setAnimatingDirection] = useState<'up' | 'down' | null>(null)
+  const [isVoting, setIsVoting] = useState(false)
   const { user, setAuthModalOpen } = useAuthStore()
 
-  const handleVote = (direction: 'up' | 'down') => {
+  const handleVote = async (direction: 'up' | 'down') => {
+    if (isVoting || disabled) return
+
     let newVote: 'up' | 'down' | null = null
     let voteDelta = 0
 
@@ -39,12 +47,34 @@ export function VoteButton({
       voteDelta = direction === 'up' ? 2 : -2
     }
 
+    // Optimistic update
+    const prevVote = userVote
+    const prevVotes = votes
     setAnimatingDirection(direction)
     setTimeout(() => setAnimatingDirection(null), 200)
-
     setUserVote(newVote)
     setVotes((prev) => prev + voteDelta)
     onVote?.(newVote)
+
+    // API call
+    setIsVoting(true)
+    try {
+      const apiValue = newVote === 'up' ? 1 : newVote === 'down' ? -1 : 0
+      await apiRequest(`/api/votes/posts/${postId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ value: apiValue }),
+      })
+    } catch (error) {
+      // Rollback on failure
+      setUserVote(prevVote)
+      setVotes(prevVotes)
+      onVote?.(prevVote)
+      toast.error('Vote failed', {
+        description: error instanceof Error ? error.message : 'Please try again.',
+      })
+    } finally {
+      setIsVoting(false)
+    }
   }
 
   const iconSize = size === 'sm' ? 14 : 16
@@ -57,6 +87,8 @@ export function VoteButton({
       <motion.button
         onClick={(e) => {
           e.stopPropagation()
+          e.preventDefault()
+          if (disabled) return
           if (!user) {
             toast.error("Authentication required", {
               description: "Please sign in to upvote posts."
@@ -66,11 +98,12 @@ export function VoteButton({
           }
           handleVote('up')
         }}
-        className="flex items-center justify-center cursor-pointer p-0.5 rounded transition-colors duration-150"
+        disabled={disabled}
+        className="flex items-center justify-center cursor-pointer p-0.5 rounded transition-colors duration-150 disabled:cursor-default disabled:opacity-50"
         style={{
-          color: userVote === 'up' ? '#C7FF3F' : '#555555',
+          color: userVote === 'up' ? 'var(--primary)' : '#555555',
         }}
-        whileHover={{ color: userVote === 'up' ? '#C7FF3F' : '#888888' }}
+        whileHover={disabled ? undefined : { color: userVote === 'up' ? 'var(--primary)' : '#888888' }}
         animate={
           animatingDirection === 'up'
             ? { scale: [1, 1.15, 1] }
@@ -89,7 +122,7 @@ export function VoteButton({
         animate={{
           color:
             userVote === 'up'
-              ? '#C7FF3F'
+              ? 'var(--primary)'
               : userVote === 'down'
                 ? '#FF4444'
                 : '#888888',
@@ -103,6 +136,8 @@ export function VoteButton({
       <motion.button
         onClick={(e) => {
           e.stopPropagation()
+          e.preventDefault()
+          if (disabled) return
           if (!user) {
             toast.error("Authentication required", {
               description: "Please sign in to downvote posts."
@@ -112,11 +147,12 @@ export function VoteButton({
           }
           handleVote('down')
         }}
-        className="flex items-center justify-center cursor-pointer p-0.5 rounded transition-colors duration-150"
+        disabled={disabled}
+        className="flex items-center justify-center cursor-pointer p-0.5 rounded transition-colors duration-150 disabled:cursor-default disabled:opacity-50"
         style={{
           color: userVote === 'down' ? '#FF4444' : '#555555',
         }}
-        whileHover={{ color: userVote === 'down' ? '#FF4444' : '#888888' }}
+        whileHover={disabled ? undefined : { color: userVote === 'down' ? '#FF4444' : '#888888' }}
         animate={
           animatingDirection === 'down'
             ? { scale: [1, 1.15, 1] }
@@ -129,4 +165,4 @@ export function VoteButton({
       </motion.button>
     </div>
   )
-}
+})

@@ -27,7 +27,7 @@ const configuredClientOrigins = env.CLIENT_ORIGIN.split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
-const localDevOriginPattern = /^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/;
+const localDevOriginPattern = /^https?:\/\/(?:localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(?:1[6-9]|2\d|3[01])\.\d+\.\d+)(?::\d+)?$/;
 
 export function isAllowedClientOrigin(origin?: string) {
   if (!origin) return true;

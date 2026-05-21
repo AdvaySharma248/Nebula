@@ -21,16 +21,16 @@ const viewLabels: Record<ViewType, string> = {
 }
 
 export default function Navbar() {
-  const {
-    currentView,
-    setView,
-    searchOpen,
-    setSearchOpen,
-    setCreatePostOpen,
-    setSidebarExpanded,
-    isMobile,
-  } = useAppStore()
-  const { user, isGuest, setAuthModalOpen } = useAuthStore()
+  const currentView = useAppStore((state) => state.currentView)
+  const setView = useAppStore((state) => state.setView)
+  const searchOpen = useAppStore((state) => state.searchOpen)
+  const setSearchOpen = useAppStore((state) => state.setSearchOpen)
+  const setCreatePostOpen = useAppStore((state) => state.setCreatePostOpen)
+  const setSidebarExpanded = useAppStore((state) => state.setSidebarExpanded)
+  const isMobile = useAppStore((state) => state.isMobile)
+  const user = useAuthStore((state) => state.user)
+  const isGuest = useAuthStore((state) => state.isGuest)
+  const setAuthModalOpen = useAuthStore((state) => state.setAuthModalOpen)
 
   // ⌘K shortcut to toggle search
   const handleKeyDown = useCallback(
@@ -133,7 +133,7 @@ export default function Navbar() {
             {user && (
               <span
                 className="absolute top-1.5 right-1.5 w-[3px] h-[3px] rounded-full"
-                style={{ background: '#C7FF3F' }}
+                style={{ background: 'var(--primary)' }}
               />
             )}
           </button>
@@ -168,7 +168,7 @@ export default function Navbar() {
                 className="text-[9px] font-semibold"
                 style={{
                   background: '#1A1A1A',
-                  color: user ? '#C7FF3F' : isGuest ? '#888888' : '#555555',
+                  color: user ? 'var(--primary)' : isGuest ? '#888888' : '#555555',
                   border: '1px solid rgba(255,255,255,0.06)',
                 }}
               >

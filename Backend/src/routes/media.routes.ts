@@ -8,5 +8,6 @@ import { mediaKindSchema } from "../validators/media.validator";
 const router = Router();
 
 router.post("/images", requireAuth, uploadImage.single("file"), validate({ body: mediaKindSchema }), mediaController.upload);
+router.post("/", requireAuth, uploadImage.single("file"), validate({ body: mediaKindSchema }), mediaController.upload);
 
 export default router;

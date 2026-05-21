@@ -13,6 +13,21 @@ export const userController = {
     return sendSuccess(res, 200, "Profile updated", user);
   }),
 
+  updateUsername: asyncHandler(async (req, res) => {
+    const result = await userService.updateUsername(req.user!.id, req.body.username);
+    return sendSuccess(res, 200, "Username updated", result);
+  }),
+
+  checkUsername: asyncHandler(async (req, res) => {
+    const result = await userService.checkUsername(req.params.username, req.user?.id);
+    return sendSuccess(res, 200, "Username check complete", result);
+  }),
+
+  me: asyncHandler(async (req, res) => {
+    const user = await userService.getMe(req.user!.id);
+    return sendSuccess(res, 200, "Current profile fetched", user);
+  }),
+
   deleteMe: asyncHandler(async (req, res) => {
     await userService.deleteMe(req.user!.id);
     return sendSuccess(res, 200, "Account deleted");
@@ -33,6 +48,16 @@ export const userController = {
     return sendSuccess(res, 200, "Saved posts fetched", result.items, result.meta);
   }),
 
+  followers: asyncHandler(async (req, res) => {
+    const result = await userService.followers(req.user!.id);
+    return sendSuccess(res, 200, "Followers fetched", result.map((item) => item.follower));
+  }),
+
+  following: asyncHandler(async (req, res) => {
+    const result = await userService.following(req.user!.id);
+    return sendSuccess(res, 200, "Following fetched", result.map((item) => item.following));
+  }),
+
   follow: asyncHandler(async (req, res) => {
     const follow = await userService.follow(req.user!.id, req.params.userId);
     return sendSuccess(res, 200, "User followed", follow);
@@ -51,5 +76,15 @@ export const userController = {
   unblock: asyncHandler(async (req, res) => {
     await userService.unblock(req.user!.id, req.params.userId);
     return sendSuccess(res, 200, "User unblocked");
+  }),
+
+  sessions: asyncHandler(async (req, res) => {
+    const sessions = await userService.listSessions(req.user!.id);
+    return sendSuccess(res, 200, "Sessions fetched", sessions);
+  }),
+
+  revokeSessions: asyncHandler(async (req, res) => {
+    await userService.revokeAllSessions(req.user!.id);
+    return sendSuccess(res, 200, "All other sessions revoked");
   }),
 };

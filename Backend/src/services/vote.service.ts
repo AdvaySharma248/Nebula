@@ -3,58 +3,50 @@ import { emitToPost } from "../sockets";
 import { notificationService } from "./notification.service";
 import { notFound } from "../utils/errors";
 
-async function recalculatePost(tx: typeof db, postId: string) {
-  const [upvotes, downvotes] = await Promise.all([
-    tx.postVote.count({ where: { postId, value: 1 } }),
-    tx.postVote.count({ where: { postId, value: -1 } }),
-  ]);
-  return tx.post.update({
-    where: { id: postId },
-    data: { upvotes, downvotes, score: upvotes - downvotes },
-    select: { id: true, upvotes: true, downvotes: true, score: true, authorId: true },
-  });
-}
-
-async function recalculateComment(tx: typeof db, commentId: string) {
-  const [upvotes, downvotes] = await Promise.all([
-    tx.commentVote.count({ where: { commentId, value: 1 } }),
-    tx.commentVote.count({ where: { commentId, value: -1 } }),
-  ]);
-  return tx.comment.update({
-    where: { id: commentId },
-    data: { upvotes, downvotes, score: upvotes - downvotes },
-    select: { id: true, upvotes: true, downvotes: true, score: true, authorId: true, postId: true },
-  });
-}
-
 export const voteService = {
   async votePost(userId: string, postId: string, value: -1 | 0 | 1) {
     const post = await db.post.findFirst({ where: { id: postId, deletedAt: null }, select: { id: true } });
     if (!post) throw notFound("Post");
 
+    let shouldNotify = false;
     const result = await db.$transaction(async (tx) => {
       const existing = await tx.postVote.findUnique({ where: { userId_postId: { userId, postId } } });
-      if (value === 0 || existing?.value === value) {
+      const previousValue = (existing?.value ?? 0) as -1 | 0 | 1;
+      const nextValue = value === 0 || existing?.value === value ? 0 : value;
+      shouldNotify = nextValue === 1;
+
+      if (nextValue === 0) {
         await tx.postVote.deleteMany({ where: { userId, postId } });
-      } else {
-        await tx.postVote.upsert({
+      } else if (existing) {
+        await tx.postVote.update({
           where: { userId_postId: { userId, postId } },
-          create: { userId, postId, value },
-          update: { value },
+          data: { value: nextValue },
         });
+      } else {
+        await tx.postVote.create({ data: { userId, postId, value: nextValue } });
       }
 
-      return recalculatePost(tx as typeof db, postId);
+      return tx.post.update({
+        where: { id: postId },
+        data: {
+          upvotes: { increment: (nextValue === 1 ? 1 : 0) - (previousValue === 1 ? 1 : 0) },
+          downvotes: { increment: (nextValue === -1 ? 1 : 0) - (previousValue === -1 ? 1 : 0) },
+          score: { increment: nextValue - previousValue },
+        },
+        select: { id: true, upvotes: true, downvotes: true, score: true, authorId: true },
+      });
     });
 
-    if (value === 1) {
-      await notificationService.create({
+    if (shouldNotify && result.authorId !== userId) {
+      void notificationService.create({
         userId: result.authorId,
         actorId: userId,
         type: "UPVOTE",
         entityType: "post",
         entityId: postId,
         message: "Your post received an upvote",
+      }).catch((error) => {
+        console.error("Failed to create upvote notification", error);
       });
     }
 
@@ -66,29 +58,45 @@ export const voteService = {
     const comment = await db.comment.findFirst({ where: { id: commentId, deletedAt: null }, select: { id: true } });
     if (!comment) throw notFound("Comment");
 
+    let shouldNotify = false;
     const result = await db.$transaction(async (tx) => {
       const existing = await tx.commentVote.findUnique({ where: { userId_commentId: { userId, commentId } } });
-      if (value === 0 || existing?.value === value) {
+      const previousValue = (existing?.value ?? 0) as -1 | 0 | 1;
+      const nextValue = value === 0 || existing?.value === value ? 0 : value;
+      shouldNotify = nextValue === 1;
+
+      if (nextValue === 0) {
         await tx.commentVote.deleteMany({ where: { userId, commentId } });
-      } else {
-        await tx.commentVote.upsert({
+      } else if (existing) {
+        await tx.commentVote.update({
           where: { userId_commentId: { userId, commentId } },
-          create: { userId, commentId, value },
-          update: { value },
+          data: { value: nextValue },
         });
+      } else {
+        await tx.commentVote.create({ data: { userId, commentId, value: nextValue } });
       }
 
-      return recalculateComment(tx as typeof db, commentId);
+      return tx.comment.update({
+        where: { id: commentId },
+        data: {
+          upvotes: { increment: (nextValue === 1 ? 1 : 0) - (previousValue === 1 ? 1 : 0) },
+          downvotes: { increment: (nextValue === -1 ? 1 : 0) - (previousValue === -1 ? 1 : 0) },
+          score: { increment: nextValue - previousValue },
+        },
+        select: { id: true, upvotes: true, downvotes: true, score: true, authorId: true, postId: true },
+      });
     });
 
-    if (value === 1) {
-      await notificationService.create({
+    if (shouldNotify && result.authorId !== userId) {
+      void notificationService.create({
         userId: result.authorId,
         actorId: userId,
         type: "UPVOTE",
         entityType: "comment",
         entityId: commentId,
         message: "Your comment received an upvote",
+      }).catch((error) => {
+        console.error("Failed to create comment upvote notification", error);
       });
     }
 

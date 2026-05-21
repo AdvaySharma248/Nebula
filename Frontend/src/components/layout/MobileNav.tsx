@@ -19,7 +19,9 @@ const mobileNavItems: MobileNavItem[] = [
 ]
 
 export default function MobileNav() {
-  const { currentView, setView, setCreatePostOpen } = useAppStore()
+  const currentView = useAppStore((state) => state.currentView)
+  const setView = useAppStore((state) => state.setView)
+  const setCreatePostOpen = useAppStore((state) => state.setCreatePostOpen)
 
   const handleClick = (item: MobileNavItem) => {
     if (item.isCreate) {
@@ -76,11 +78,11 @@ export default function MobileNav() {
             >
               <item.icon
                 className="w-5 h-5 transition-colors duration-150"
-                style={{ color: active ? '#C7FF3F' : '#555555' }}
+                style={{ color: active ? 'var(--primary)' : '#555555' }}
               />
               <span
                 className="text-[10px] font-medium"
-                style={{ color: active ? '#C7FF3F' : '#555555' }}
+                style={{ color: active ? 'var(--primary)' : '#555555' }}
               >
                 {item.label}
               </span>

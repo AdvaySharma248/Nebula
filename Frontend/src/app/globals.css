@@ -76,6 +76,52 @@
   --sidebar-accent-foreground: #F5F5F5;
   --sidebar-border: rgba(255,255,255,0.06);
   --sidebar-ring: #C7FF3F;
+  
+  --accent-border: rgba(199, 255, 63, 0.3);
+  --primary-rgb: 199, 255, 63;
+  --text-tertiary: #555555;
+}
+
+html.light {
+  --background: #F8F9FA;
+  --foreground: #121212;
+  --card: #FFFFFF;
+  --card-foreground: #121212;
+  --popover: #FFFFFF;
+  --popover-foreground: #121212;
+  --primary-foreground: #FFFFFF;
+  --secondary: #EBEBEB;
+  --secondary-foreground: #121212;
+  --muted: #F1F1F1;
+  --muted-foreground: #777777;
+  --accent-foreground: #FFFFFF;
+  --border: rgba(0, 0, 0, 0.08);
+  --input: rgba(0, 0, 0, 0.08);
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #121212;
+  --sidebar-border: rgba(0, 0, 0, 0.08);
+  --sidebar-accent-foreground: #121212;
+  
+  --text-tertiary: #888888;
+}
+
+html.density-compact {
+  --spacing: 0.18rem;
+}
+
+html.density-comfortable {
+  --spacing: 0.32rem;
+}
+
+html.motion-reduce *,
+html.motion-reduce *::before,
+html.motion-reduce *::after {
+  animation-delay: 0s !important;
+  animation-duration: 0.001s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001s !important;
+  transition-delay: 0s !important;
+  scroll-behavior: auto !important;
 }
 
 @layer base {
@@ -84,8 +130,8 @@
   }
   body {
     @apply bg-background text-foreground;
-    background: #0D0D0D;
-    color: #F5F5F5;
+    background: var(--background);
+    color: var(--foreground);
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -124,47 +170,47 @@
 
 /* Surface card */
 .surface {
-  background: #151515;
-  border: 1px solid rgba(255,255,255,0.06);
+  background: var(--card);
+  border: 1px solid var(--border);
 }
 
 .surface-elevated {
-  background: #1A1A1A;
-  border: 1px solid rgba(255,255,255,0.08);
+  background: var(--popover);
+  border: 1px solid var(--border);
 }
 
 /* Accent utilities */
 .accent-text {
-  color: #C7FF3F;
+  color: var(--primary);
 }
 
 .accent-bg {
-  background: #C7FF3F;
-  color: #0D0D0D;
+  background: var(--primary);
+  color: var(--primary-foreground);
 }
 
 .accent-bg-subtle {
-  background: rgba(199,255,63,0.08);
-  color: #C7FF3F;
+  background: var(--sidebar-accent);
+  color: var(--primary);
 }
 
 .accent-border {
-  border-color: rgba(199,255,63,0.3);
+  border-color: var(--accent-border);
 }
 
 /* Text utilities */
 .text-secondary {
-  color: #888888;
+  color: var(--muted-foreground);
 }
 
 .text-tertiary {
-  color: #555555;
+  color: var(--text-tertiary);
 }
 
 /* Custom selection */
 ::selection {
-  background: rgba(199,255,63,0.2);
-  color: #F5F5F5;
+  background: var(--sidebar-accent);
+  color: var(--foreground);
 }
 
 /* Smooth scroll */
@@ -174,19 +220,19 @@ html {
 
 /* Focus ring */
 *:focus-visible {
-  outline: 1px solid rgba(199,255,63,0.5);
+  outline: 1px solid var(--primary);
   outline-offset: 2px;
 }
 
 /* Editorial underline */
 .editorial-line {
   height: 1px;
-  background: rgba(255,255,255,0.06);
+  background: var(--border);
 }
 
 .editorial-line-accent {
   height: 1px;
-  background: rgba(199,255,63,0.3);
+  background: var(--accent-border);
 }
 
 /* Smooth transition utility */

@@ -1,12 +1,14 @@
 'use client'
 
-import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { MessageCircle, Share2, Bookmark } from 'lucide-react'
+import { useCallback, useEffect, useState, memo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { MessageCircle, Share2, Bookmark, Link2, Check, ExternalLink } from 'lucide-react'
 import { VoteButton } from './VoteButton'
 import { useAppStore } from '@/stores/app-store'
 import { useAuthStore } from '@/stores/auth-store'
 import { toast } from 'sonner'
+import { apiRequest, getMediaUrl, isVideoUrl } from '@/lib/api'
+import { LazyImage } from '@/components/ui/LazyImage'
 
 export interface Post {
   id: string
@@ -20,6 +22,7 @@ export interface Post {
   timestamp: string
   userVote: 'up' | 'down' | null
   isSaved: boolean
+  isOptimistic?: boolean
 }
 
 interface PostCardProps {
@@ -27,17 +30,31 @@ interface PostCardProps {
   index?: number
 }
 
-export function PostCard({ post, index = 0 }: PostCardProps) {
-  const { setSelectedPost } = useAppStore()
+export const PostCard = memo(function PostCard({ post, index = 0 }: PostCardProps) {
+  const setSelectedPost = useAppStore((state) => state.setSelectedPost)
   const [isSaved, setIsSaved] = useState(post.isSaved)
-  const { user, setAuthModalOpen } = useAuthStore()
+  const [saveAnimating, setSaveAnimating] = useState(false)
+  const user = useAuthStore((state) => state.user)
+  const setAuthModalOpen = useAuthStore((state) => state.setAuthModalOpen)
+  const [shareMenuOpen, setShareMenuOpen] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
 
-  const handleCardClick = () => {
+  useEffect(() => {
+    setIsSaved(post.isSaved)
+  }, [post.isSaved])
+
+  const handleCardClick = useCallback((e: React.MouseEvent) => {
+    if (post.isOptimistic) return
+    // Don't navigate if clicking on an interactive element
+    const target = e.target as HTMLElement
+    if (target.closest('button') || target.closest('[role="menu"]')) return
     setSelectedPost(post.id)
-  }
+  }, [post.id, post.isOptimistic, setSelectedPost])
 
-  const handleSave = (e: React.MouseEvent) => {
+  const handleSave = async (e: React.MouseEvent) => {
     e.stopPropagation()
+    e.preventDefault()
+    if (post.isOptimistic) return
     if (!user) {
       toast.error("Authentication required", {
         description: "Please sign in to save posts."
@@ -47,16 +64,79 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
     }
     const nextSavedState = !isSaved
     setIsSaved(nextSavedState)
-    toast.success(nextSavedState ? "Post saved to Bookmarks" : "Post removed from Bookmarks")
+    setSaveAnimating(true)
+    setTimeout(() => setSaveAnimating(false), 300)
+    try {
+      await apiRequest(`/api/posts/${post.id}/save`, {
+        method: nextSavedState ? 'POST' : 'DELETE',
+      })
+      toast.success(nextSavedState ? 'Post saved to Bookmarks' : 'Post removed from Bookmarks')
+    } catch (error) {
+      setIsSaved(!nextSavedState)
+      toast.error('Could not update saved posts', {
+        description: error instanceof Error ? error.message : 'Please try again.',
+      })
+    }
   }
 
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation()
+    e.preventDefault()
+    if (post.isOptimistic) return
+    setShareMenuOpen(!shareMenuOpen)
+  }
+
+  const handleCopyLink = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+    if (post.isOptimistic) return
+    const url = `${window.location.origin}?post=${post.id}`
+    try {
+      await navigator.clipboard.writeText(url)
+      setLinkCopied(true)
+      toast.success('Link copied to clipboard')
+      setTimeout(() => {
+        setLinkCopied(false)
+        setShareMenuOpen(false)
+      }, 1500)
+    } catch {
+      toast.error('Failed to copy link')
+    }
+  }
+
+  const handleNativeShare = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+    if (post.isOptimistic) return
+    const url = `${window.location.origin}?post=${post.id}`
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: post.title,
+          text: post.content?.slice(0, 100) || post.title,
+          url,
+        })
+        setShareMenuOpen(false)
+      } catch {
+        // User cancelled — that's fine
+      }
+    } else {
+      handleCopyLink(e)
+    }
   }
 
   const handleComment = (e: React.MouseEvent) => {
     e.stopPropagation()
+    e.preventDefault()
+    if (post.isOptimistic) return
     setSelectedPost(post.id)
+  }
+
+  // Close share menu on outside click
+  const handleShareMenuClose = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+    setShareMenuOpen(false)
   }
 
   return (
@@ -64,8 +144,8 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
-        duration: 0.35,
-        delay: index * 0.05,
+        duration: 0.28,
+        delay: Math.min(index, 5) * 0.025,
         ease: [0.25, 0.46, 0.45, 0.94],
       }}
       onClick={handleCardClick}
@@ -77,11 +157,13 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
     >
       <div className="flex gap-3 p-4">
         {/* Vote column */}
-        <div className="flex-shrink-0 pt-0.5">
+        <div className="flex-shrink-0 pt-0.5" onClick={(e) => e.stopPropagation()}>
           <VoteButton
+            postId={post.id}
             initialVotes={post.votes}
             initialUserVote={post.userVote}
             size="sm"
+            disabled={post.isOptimistic}
           />
         </div>
 
@@ -98,7 +180,7 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
             </span>
             <span className="text-tertiary text-xs">·</span>
             <span className="text-tertiary text-xs flex-shrink-0">
-              {post.timestamp}
+              {post.isOptimistic ? 'Posting...' : post.timestamp}
             </span>
           </div>
 
@@ -115,15 +197,24 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
             {post.content}
           </p>
 
-          {/* Optional image */}
+          {/* Optional media (Image or Video) */}
           {post.image && (
-            <div className="mb-3">
-              <img
-                src={post.image}
-                alt={post.title}
-                className="w-full max-h-64 object-cover rounded border border-white/[0.06]"
-                loading="lazy"
-              />
+            <div className="mb-3 overflow-hidden rounded border border-white/[0.06] bg-[#0a0a0a]" onClick={(e) => e.stopPropagation()}>
+              {isVideoUrl(post.image) ? (
+                <video
+                  src={getMediaUrl(post.image)}
+                  className="w-full max-h-96 object-contain rounded"
+                  controls
+                  preload="metadata"
+                  playsInline
+                />
+              ) : (
+                <LazyImage
+                  src={getMediaUrl(post.image)}
+                  alt={post.title}
+                  className="w-full max-h-96 object-cover rounded"
+                />
+              )}
             </div>
           )}
 
@@ -138,20 +229,58 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
               <span>{post.comments}</span>
             </button>
 
-            <button
-              onClick={handleShare}
-              className="flex items-center gap-1 text-tertiary text-xs hover:text-secondary transition-colors duration-150 cursor-pointer"
-              aria-label="Share"
-            >
-              <Share2 size={13} />
-              <span>Share</span>
-            </button>
+            {/* Share with dropdown */}
+            <div className="relative">
+              <button
+                onClick={handleShare}
+                className="flex items-center gap-1 text-tertiary text-xs hover:text-secondary transition-colors duration-150 cursor-pointer"
+                aria-label="Share"
+              >
+                <Share2 size={13} />
+                <span>Share</span>
+              </button>
+
+              <AnimatePresence>
+                {shareMenuOpen && (
+                  <>
+                    {/* Invisible backdrop to close menu */}
+                    <div className="fixed inset-0 z-40" onClick={handleShareMenuClose} />
+                    <motion.div
+                      initial={{ opacity: 0, y: 4, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 4, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute left-0 bottom-full mb-1 z-50 w-44 rounded-lg overflow-hidden"
+                      style={{ background: '#1A1A1A', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 8px 30px rgba(0,0,0,0.4)' }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        onClick={handleCopyLink}
+                        className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-[#F5F5F5] hover:bg-white/[0.04] transition-colors cursor-pointer"
+                      >
+                        {linkCopied ? <Check size={13} className="accent-text" /> : <Link2 size={13} />}
+                        <span>{linkCopied ? 'Copied!' : 'Copy Link'}</span>
+                      </button>
+                      {typeof navigator !== 'undefined' && 'share' in navigator && (
+                        <button
+                          onClick={handleNativeShare}
+                          className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-[#F5F5F5] hover:bg-white/[0.04] transition-colors cursor-pointer"
+                        >
+                          <ExternalLink size={13} />
+                          <span>Share via...</span>
+                        </button>
+                      )}
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
 
             <button
               onClick={handleSave}
               className="flex items-center gap-1 text-xs transition-colors duration-150 cursor-pointer ml-auto"
               style={{
-                color: isSaved ? '#C7FF3F' : '#555555',
+                color: isSaved ? 'var(--primary)' : '#555555',
               }}
               onMouseEnter={(e) => {
                 if (!isSaved) (e.currentTarget as HTMLElement).style.color = '#888888'
@@ -161,7 +290,13 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
               }}
               aria-label={isSaved ? 'Unsave' : 'Save'}
             >
-              <Bookmark size={13} fill={isSaved ? '#C7FF3F' : 'none'} />
+              <motion.span
+                animate={saveAnimating ? { scale: [1, 1.3, 1] } : { scale: 1 }}
+                transition={{ duration: 0.3 }}
+                className="flex"
+              >
+                <Bookmark size={13} fill={isSaved ? 'var(--primary)' : 'none'} />
+              </motion.span>
               <span>{isSaved ? 'Saved' : 'Save'}</span>
             </button>
           </div>
@@ -169,4 +304,4 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
       </div>
     </motion.article>
   )
-}
+})
